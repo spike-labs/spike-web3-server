@@ -32,3 +32,15 @@ username = ""
 password = ""
 max_idle_conns = 0
 max_open_conns = 0
+
+[sign]
+taskThreshold = 100
+schedInterval = 5
+
+[[signWorkers]]
+walletAddress = ""
+serverUrl = ""
+
+[[signWorkers]]
+walletAddress = ""
+serverUrl = ""
