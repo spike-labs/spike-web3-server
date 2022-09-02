@@ -9,13 +9,15 @@ var log = logger.Logger("config")
 var Cfg Config
 
 type Config struct {
-	System   System   `toml:"system"`
-	Moralis  Moralis  `toml:"moralis"`
-	BscScan  BscScan  `toml:"bscscan"`
-	Contract Contract `toml:"contract"`
-	Redis    Redis    `toml:"redis"`
-	Chain    Chain    `toml:"chain"`
-	Mysql    Mysql    `toml:"mysql"`
+	System      System       `toml:"system"`
+	Moralis     Moralis      `toml:"moralis"`
+	BscScan     BscScan      `toml:"bscscan"`
+	Contract    Contract     `toml:"contract"`
+	Redis       Redis        `toml:"redis"`
+	Chain       Chain        `toml:"chain"`
+	Mysql       Mysql        `toml:"mysql"`
+	SignService SignService  `toml:"sign"`
+	SignWorkers []SignWorker `toml:"signWorkers"`
 }
 
 type Mysql struct {
@@ -63,4 +65,14 @@ type Contract struct {
 	GameTokenAddress       string `toml:"gameTokenAddress"`
 	GameVaultAddress       string `toml:"gameVaultAddress"`
 	UsdcAddress            string `toml:"usdcAddress"`
+}
+
+type SignService struct {
+	TaskThreshold int `toml:"taskThreshold"`
+	SchedInterval int `toml:"schedInterval"`
+}
+
+type SignWorker struct {
+	WalletAddress string `toml:"walletAddress"`
+	ServerUrl     string `toml:"serverUrl"`
 }
