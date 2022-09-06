@@ -2,13 +2,17 @@ package signService
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/go-resty/resty/v2"
 	"log"
 	"math/big"
 	"os"
 	"spike-frame/config"
 	"spike-frame/model"
+	"spike-frame/response"
 	"spike-frame/util"
 	"sync"
 	"time"
@@ -160,6 +164,9 @@ func (w *AllRoundWorker) GetCNonce() (uint64, error) {
 func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) error {
 	w.Lock()
 	defer w.UnLock()
+	var res response.Response
+	var signedTransaction types.Transaction
+
 	rNonce, err := w.GetRNonce()
 	if err != nil {
 		return err
@@ -198,9 +205,26 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) error {
 	if err != nil {
 		return err
 	}
-	// todo 调用签名机的接口，将未签名的数据发送过去
 
-	err = w.BscClient.SendTransaction(context.Background(), transaction)
+	resp, err := w.httpClient.R().
+		SetHeader("Accept", "application/json").
+		SetBody(transaction).
+		Post(w.GetInfo().serverUrl)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(resp.Body(), &res)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = w.BscClient.SendTransaction(context.Background(), &signedTransaction)
 	if err != nil {
 		return err
 	}
@@ -213,6 +237,9 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) error {
 func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) error {
 	w.Lock()
 	defer w.UnLock()
+	var res response.Response
+	var signedTransaction types.Transaction
+
 	rNonce, err := w.GetRNonce()
 	if err != nil {
 		return err
@@ -253,7 +280,24 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) error {
 	if err != nil {
 		return err
 	}
-	// todo 调用签名机的接口，将未签名的数据发送过去
+
+	resp, err := w.httpClient.R().
+		SetHeader("Accept", "application/json").
+		SetBody(transaction).
+		Post(w.GetInfo().serverUrl)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(resp.Body(), &res)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	err = w.BscClient.SendTransaction(context.Background(), transaction)
 	if err != nil {
@@ -266,9 +310,11 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) error {
 }
 
 func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) error {
-
 	w.Lock()
 	defer w.UnLock()
+	var res response.Response
+	var signedTransaction types.Transaction
+
 	rNonce, err := w.GetRNonce()
 	if err != nil {
 		return err
@@ -309,7 +355,24 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) error {
 	if err != nil {
 		return err
 	}
-	// todo 调用签名机的接口，将未签名的数据发送过去
+
+	resp, err := w.httpClient.R().
+		SetHeader("Accept", "application/json").
+		SetBody(transaction).
+		Post(w.GetInfo().serverUrl)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(resp.Body(), &res)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	err = w.BscClient.SendTransaction(context.Background(), transaction)
 	if err != nil {

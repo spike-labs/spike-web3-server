@@ -9,7 +9,7 @@ import (
 
 var log = logger.Logger("initialize")
 
-func initRouter() *gin.Engine {
+func initRouter() (*gin.Engine, error) {
 	var r = gin.Default()
 	r.Use(middleware.Cors())
 	publicGroup := r.Group("")
@@ -19,7 +19,10 @@ func initRouter() *gin.Engine {
 			c.JSON(200, "ok")
 		})
 	}
-	routerGroupApp := v1.NewRouterGroup()
+	routerGroupApp, err := v1.NewRouterGroup()
+	if err != nil {
+		return nil, err
+	}
 	queryGroup := routerGroupApp.QueryGroup
 	queryApiGroup := r.Group("/query-api/v1")
 	queryGroup.InitQueryGroup(queryApiGroup)
@@ -27,5 +30,5 @@ func initRouter() *gin.Engine {
 	txGroup := routerGroupApp.TxGroup
 	txApiGroup := r.Group("/tx-api/v1")
 	txGroup.InitTxGroup(txApiGroup)
-	return r
+	return r, nil
 }

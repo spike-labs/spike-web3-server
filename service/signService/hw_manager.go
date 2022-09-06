@@ -33,7 +33,7 @@ func (w *HotWalletManager) AddWorker(worker Worker) {
 	w.scheduler.workers = append(w.scheduler.workers, worker)
 }
 
-func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) (*model.BatchMintReq, error) {
+func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error {
 
 	req := &model.BatchMintReq{
 		Uuid:     uuid.New(),
@@ -42,10 +42,10 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) (*mode
 	}
 	// todo write database
 	w.scheduler.Schedule(req)
-	return req, nil
+	return nil
 }
 
-func (w *HotWalletManager) WithdrawToken(service request.BatchWithdrawalTokenService) (*model.WithdrawTokenReq, error) {
+func (w *HotWalletManager) WithdrawToken(service request.BatchWithdrawalTokenService) error {
 	req := &model.WithdrawTokenReq{
 		Uuid:         uuid.New(),
 		ToAddress:    common.HexToAddress(service.ToAddress),
@@ -54,10 +54,10 @@ func (w *HotWalletManager) WithdrawToken(service request.BatchWithdrawalTokenSer
 	}
 	// todo write database
 	w.scheduler.Schedule(req)
-	return req, nil
+	return nil
 }
 
-func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService) (*model.WithdrawNFTReq, error) {
+func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService) error {
 	req := &model.WithdrawNFTReq{
 		Uuid:         uuid.New(),
 		TokenId:      service.TokenID,
@@ -66,5 +66,5 @@ func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService
 	}
 	// todo write database
 	w.scheduler.Schedule(req)
-	return req, nil
+	return nil
 }

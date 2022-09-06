@@ -8,7 +8,10 @@ import (
 )
 
 func RunServer() {
-	r := initRouter()
+	r, err := initRouter()
+	if err != nil {
+		panic(err)
+	}
 	system := config.Cfg.System
 	server := initServer(system.Port, r)
 	log.Errorf(server.ListenAndServe().Error())
