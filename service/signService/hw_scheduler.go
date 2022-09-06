@@ -45,6 +45,7 @@ func (hw *hotWalletScheduler) Schedule(req interface{}) {
 }
 
 func (hw *hotWalletScheduler) runSchedule() {
+
 	ticker := time.NewTicker(time.Duration(config.Cfg.SignService.SchedInterval) * time.Minute)
 	for {
 		select {
