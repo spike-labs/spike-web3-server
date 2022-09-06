@@ -11,9 +11,7 @@ var log = logger.Logger("cache")
 
 func ConnectRedis() *redis.Client {
 	m := config.Cfg.Redis
-	if m.Address == "" || m.Password == "" {
-		return nil
-	}
+
 	client := redis.NewClient(
 		&redis.Options{
 			Addr:       m.Address,

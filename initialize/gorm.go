@@ -17,6 +17,7 @@ func GormMysql() *gorm.DB {
 		SkipInitializeWithVersion: false,
 	}
 	if db, err := gorm.Open(mysql.New(mysqlConfig), nil); err != nil {
+		panic("init gorm err")
 		return nil
 	} else {
 		sqlDB, _ := db.DB()

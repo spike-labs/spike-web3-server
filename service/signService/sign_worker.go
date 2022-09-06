@@ -9,11 +9,12 @@ import (
 	"github.com/go-resty/resty/v2"
 	"log"
 	"math/big"
-	"os"
+	chain "spike-frame/chain/abi"
 	"spike-frame/config"
 	"spike-frame/model"
 	"spike-frame/response"
 	"spike-frame/util"
+	"strings"
 	"sync"
 	"time"
 
@@ -66,20 +67,12 @@ func NewAllRoundWorker() (*AllRoundWorker, error) {
 		return nil, err
 	}
 
-	open, err := os.Open("./chain/contract/gameNFT.abi")
-	if err != nil {
-		return nil, err
-	}
-	nftAbi, err := abi.JSON(open)
+	nftAbi, err := abi.JSON(strings.NewReader(chain.GameNftABI))
 	if err != nil {
 		return nil, err
 	}
 
-	open, err = os.Open("./chain/contract/gameVault.abi")
-	if err != nil {
-		return nil, err
-	}
-	vaultAbi, err := abi.JSON(open)
+	vaultAbi, err := abi.JSON(strings.NewReader(chain.GameVaultABI))
 	if err != nil {
 		return nil, err
 	}

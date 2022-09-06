@@ -9,6 +9,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/response"
+	"spike-frame/util"
 )
 
 var log = logger.Logger("service")
@@ -32,7 +33,7 @@ func QueryWalletNft(cursor, walletAddr, network string, res []response.NftResult
 	var nrs response.NftResults
 	err = json.Unmarshal(resp.Body(), &nrs)
 	if err != nil {
-		log.Error("json unmarshal err : ", err)
+		log.Errorf("json unmarshal err : %+v", err)
 		return res, err
 	}
 	res = append(res, nrs.Results...)
@@ -45,4 +46,30 @@ func QueryWalletNft(cursor, walletAddr, network string, res []response.NftResult
 
 func getUrl(contractAddr, walletAddr, network, cursor string) string {
 	return fmt.Sprintf("%s%s/nft/%s?chain=%s&cursor=%s", constant.MORALIS_API, walletAddr, contractAddr, network, cursor)
+}
+
+func (qm *QueryManager) handleNftData(walletAddr string, data []response.NftResult) ([]response.NftResult, error) {
+	data = util.ConvertNftResult(data)
+	dataList := util.ParseMetadata(data)
+	dataMap := util.ParseCacheData(dataList)
+	nftType := make([]response.NftType, 0)
+
+	for k, _ := range dataMap {
+		nftType = append(nftType, response.NftType{
+			Name:   k,
+			Amount: len(dataMap[k]),
+		})
+		cacheByte, err := json.Marshal(dataMap[k])
+		if err != nil {
+			break
+		}
+		util.SetFromRedis(walletAddr+constant.NFTLISTSUFFIX+k, string(cacheByte), nftListDuration, qm.redisClient)
+	}
+
+	nftTypeByte, err := json.Marshal(nftType)
+	if err != nil {
+		return data, err
+	}
+	util.SetFromRedis(walletAddr+constant.NFTTYPESUFFIX, string(nftTypeByte), nftListDuration, qm.redisClient)
+	return data, nil
 }
