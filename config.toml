@@ -17,7 +17,7 @@ gameVaultAddress = "0xDd77BBAafc52BDfA84Bb98a095dfb715f8280870"
 usdcAddress = "0x64544969ed7EBf5f083679233325356EbE738930"
 
 [redis]
-address = "127.0.0.1:6380"
+address = "192.168.31.244:6380"
 password = ""
 
 [chain]
@@ -33,17 +33,17 @@ password = "123456"
 maxIdleConns = 1
 maxOpenConns = 1
 
-[sign]
+[signService]
 taskThreshold = 100
 schedInterval = 5
 
 [[signWorkers]]
-walletAddress = ""
-serverUrl = ""
+walletAddress = "0x550bB66C3050C2e9C5DC2b35aa924485b48B67d0"
+serverUrl = "111"
 
 [[signWorkers]]
-walletAddress = ""
-serverUrl = ""
+walletAddress = "0x550bB66C3050C2e9C5DC2b35aa924485b48B67d0"
+serverUrl = "111"
 
 [model]
 name = ["Soul", "Soul Tank"]

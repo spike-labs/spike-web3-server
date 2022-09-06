@@ -16,7 +16,7 @@ type Config struct {
 	Redis       Redis        `toml:"redis"`
 	Chain       Chain        `toml:"chain"`
 	Mysql       Mysql        `toml:"mysql"`
-	SignService SignService  `toml:"sign"`
+	SignService SignService  `toml:"signService"`
 	SignWorkers []SignWorker `toml:"signWorkers"`
 }
 

@@ -3,10 +3,13 @@ package signService
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
+	logger "github.com/ipfs/go-log"
 	"spike-frame/config"
 	"spike-frame/model"
 	"spike-frame/request"
 )
+
+var log = logger.Logger("sign")
 
 type HotWalletManager struct {
 	scheduler *hotWalletScheduler
@@ -20,6 +23,7 @@ func NewHWManager() (*HotWalletManager, error) {
 	for i := 0; i < len(config.Cfg.SignWorkers); i++ {
 		worker, err := NewAllRoundWorker()
 		if err != nil {
+			log.Error("===Spike log:", err)
 			return nil, err
 		}
 		m.AddWorker(worker)

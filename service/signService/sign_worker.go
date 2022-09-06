@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/go-resty/resty/v2"
-	"log"
 	"math/big"
 	chain "spike-frame/chain/abi"
 	"spike-frame/config"
@@ -120,7 +119,8 @@ func (w *AllRoundWorker) Lock() bool {
 	defer w.nLK.Unlock()
 	bool, err := w.rdb.SetNX(context.Background(), w.GetInfo().walletAddress.String(), 1, 10*time.Second).Result()
 	if err != nil {
-		log.Println(err.Error())
+		log.Error("===Spike log:", err)
+		return false
 	}
 	return bool
 }
@@ -128,7 +128,7 @@ func (w *AllRoundWorker) Lock() bool {
 func (w *AllRoundWorker) UnLock() uint64 {
 	nums, err := w.rdb.Del(context.Background(), w.GetInfo().walletAddress.String()).Result()
 	if err != nil {
-		log.Println(err.Error())
+		log.Error("===Spike log:", err)
 		return 0
 	}
 	return uint64(nums)
