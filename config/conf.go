@@ -21,14 +21,14 @@ type Config struct {
 }
 
 type Mysql struct {
-	Path         string `mapstructure:"path" json:"path" toml:"path"`
-	Port         string `mapstructure:"port" json:"port" toml:"port"`
-	Config       string `mapstructure:"config" json:"config" toml:"config"`
-	Dbname       string `mapstructure:"db_name" json:"db_name" toml:"dbame"`
-	Username     string `mapstructure:"username" json:"username" toml:"username"`
-	Password     string `mapstructure:"password" json:"password" toml:"password"`
-	MaxIdleConns int    `mapstructure:"max_idle_conns" json:"max_idle_conns" toml:"maxIdleConns"`
-	MaxOpenConns int    `mapstructure:"max_open_conns" json:"max_open_conns" toml:"maxOpenConns"`
+	Path         string `json:"path" toml:"path"`
+	Port         string `json:"port" toml:"port"`
+	Config       string `json:"config" toml:"config"`
+	Dbname       string `json:"db_name" toml:"dbName"`
+	Username     string `json:"username" toml:"username"`
+	Password     string `json:"password" toml:"password"`
+	MaxIdleConns int    `json:"max_idle_conns" toml:"maxIdleConns"`
+	MaxOpenConns int    `json:"max_open_conns" toml:"maxOpenConns"`
 }
 
 func (m *Mysql) Dsn() string {

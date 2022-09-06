@@ -25,13 +25,13 @@ wsNodeAddress = "wss://ws-nd-513-001-835.p2pify.com/16ead84fd5bde769914b64a03ecd
 rpcNodeAddress = "https://nd-513-001-835.p2pify.com/16ead84fd5bde769914b64a03ecde444"
 
 [mysql]
-path = ""
-port = ""
-dbName = ""
-username = ""
-password = ""
-max_idle_conns = 0
-max_open_conns = 0
+path = "192.168.31.244"
+port = "3309"
+dbName = "spike_frame_server"
+username = "root"
+password = "123456"
+maxIdleConns = 1
+maxOpenConns = 1
 
 [sign]
 taskThreshold = 100
@@ -44,3 +44,11 @@ serverUrl = ""
 [[signWorkers]]
 walletAddress = ""
 serverUrl = ""
+
+[model]
+name = ["Soul", "Soul Tank"]
+
+[limit]
+nftLimit = 12
+txRecordLimit = 12
+

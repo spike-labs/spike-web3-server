@@ -76,7 +76,6 @@ func (s *Scheduler) trySched() {
 			s.rqLk.Lock()
 			s.rq.Push(req)
 			s.rqLk.Unlock()
-			log.Infof("---")
 		case <-ticker.C:
 		}
 		s.handleRequest()

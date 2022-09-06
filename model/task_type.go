@@ -6,14 +6,14 @@ const (
 	Erc20TxRecordQuery
 )
 
-var shortNames = map[TaskType]string{
+var taskTypeShortNames = map[TaskType]string{
 	NftQuery:            "nftQuery",
 	NativeTxRecordQuery: "nativeTxRecordQuery",
 	Erc20TxRecordQuery:  "erc20TxRecordQuery",
 }
 
 func (t TaskType) String() string {
-	n, ok := shortNames[t]
+	n, ok := taskTypeShortNames[t]
 	if !ok {
 		return "unknown"
 	}
