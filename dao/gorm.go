@@ -18,7 +18,7 @@ func NewGormAccessor(db *gorm.DB) *GormAccessor {
 	}
 }
 
-func (g *GormAccessor) SaveTxCb(orderId, uuid, txHash, from, to, amount, tokenId, cb string, txType, createTime int64) error {
+func (g *GormAccessor) SaveTxCb(orderId, uuid, txHash, from, to, amount string, tokenId int64, cb string, txType, createTime int64) error {
 	tx := model.SpikeTx{
 		OrderId:    orderId,
 		Uuid:       uuid,
@@ -34,7 +34,7 @@ func (g *GormAccessor) SaveTxCb(orderId, uuid, txHash, from, to, amount, tokenId
 	return g.DB.Create(&tx).Error
 }
 
-func (g *GormAccessor) RecordWithdrawTxHash(uuidList []string, txHash string, txStatus int64) error {
+func (g *GormAccessor) RecordTxHash(uuidList []string, txHash string, txStatus int) error {
 	return g.DB.Model(model.SpikeTx{}).Where("uuid IN ?", uuidList).Updates(model.SpikeTx{
 		TxHash: txHash,
 		Status: txStatus,
@@ -50,7 +50,7 @@ func (g *GormAccessor) QueryGameCb(txHash string) ([]model.SpikeTx, error) {
 	return spikeTxs, nil
 }
 
-func (g *GormAccessor) UpdateTxStatus(txHash string, txStatus, payTime int64) error {
+func (g *GormAccessor) UpdateTxStatus(txHash string, txStatus int, payTime int64) error {
 	return g.DB.Model(model.SpikeTx{}).Where("tx_hash = ?", txHash).Updates(model.SpikeTx{
 		Status:  txStatus,
 		PayTime: payTime,

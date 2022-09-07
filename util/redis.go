@@ -18,7 +18,7 @@ func SetFromRedis(key string, value interface{}, duration time.Duration, client 
 	}
 }
 
-func GetStringFromRedis(key string, client *redis.Client) (string, error) {
+func GetStringFromRedis(key string, client *redis.Client) (string, bool, error) {
 	key = strings.ToLower(key)
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
@@ -26,15 +26,15 @@ func GetStringFromRedis(key string, client *redis.Client) (string, error) {
 	val, err := client.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", nil
+			return "", true, nil
 		}
 		log.Error(err.Error())
-		return "", err
+		return "", false, err
 	}
-	return val, nil
+	return val, false, nil
 }
 
-func GetIntFromRedis(key string, client *redis.Client) (int64, error) {
+func GetIntFromRedis(key string, client *redis.Client) (int64, bool, error) {
 	key = strings.ToLower(key)
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
@@ -42,12 +42,12 @@ func GetIntFromRedis(key string, client *redis.Client) (int64, error) {
 	val, err := client.Get(ctx, key).Int64()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return 0, nil
+			return 0, true, nil
 		}
 		log.Error(err.Error())
-		return 0, err
+		return 0, false, err
 	}
-	return val, nil
+	return val, false, nil
 }
 
 func RmKeyByPrefix(prefix string, client *redis.Client) {

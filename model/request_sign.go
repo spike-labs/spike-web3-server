@@ -2,16 +2,15 @@ package model
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/google/uuid"
 	"sync"
 
 	"spike-frame/config"
 )
 
 type BatchMintReq struct {
-	Uuid     uuid.UUID `json:"uuid"`
-	TokenID  int64     `json:"token_id"`
-	TokenURI string    `json:"token_uri"`
+	Uuid     string `json:"uuid"`
+	TokenID  int64  `json:"token_id"`
+	TokenURI string `json:"token_uri"`
 }
 
 type BatchMintQueue struct {
@@ -40,7 +39,7 @@ func (q *BatchMintQueue) Remove(i int) *BatchMintReq {
 func (q *BatchMintQueue) Clear() {
 	q.qLK.Lock()
 	defer q.qLK.Unlock()
-	q = &BatchMintQueue{}
+	q = &BatchMintQueue{Reqs: make([]*BatchMintReq, 0)}
 }
 
 func (q *BatchMintQueue) Len() int { return len(q.Reqs) }
@@ -73,9 +72,9 @@ func (q *BatchMintQueue) CheckExecTask() []*BatchMintQueue {
 }
 
 type WithdrawTokenReq struct {
-	Uuid         uuid.UUID      `json:"uuid"`
+	Uuid         string         `json:"uuid"`
 	ToAddress    common.Address `json:"to_address"`
-	Amount       int64          `json:"amount"`
+	Amount       string         `json:"amount"`
 	TokenAddress common.Address `json:"token_address"`
 }
 type WithdrawTokenQueue struct {
@@ -98,7 +97,7 @@ func (q *WithdrawTokenQueue) Remove(i int) *WithdrawTokenReq {
 	return item
 }
 func (q *WithdrawTokenQueue) Clear() {
-	q = &WithdrawTokenQueue{}
+	q = &WithdrawTokenQueue{Reqs: make([]*WithdrawTokenReq, 0)}
 }
 
 func (q *WithdrawTokenQueue) Len() int { return len(q.Reqs) }
@@ -130,7 +129,7 @@ func (q *WithdrawTokenQueue) CheckExecTask() []*WithdrawTokenQueue {
 }
 
 type WithdrawNFTReq struct {
-	Uuid         uuid.UUID      `json:"uuid"`
+	Uuid         string         `json:"uuid"`
 	TokenId      int64          `json:"token_id"`
 	ToAddress    common.Address `json:"to_address"`
 	TokenAddress common.Address `json:"token_address"`
@@ -155,7 +154,7 @@ func (q *WithdrawNFTQueue) Remove(i int) *WithdrawNFTReq {
 	return item
 }
 func (q *WithdrawNFTQueue) Clear() {
-	q = &WithdrawNFTQueue{}
+	q = &WithdrawNFTQueue{Reqs: make([]*WithdrawNFTReq, 0)}
 }
 
 func (q *WithdrawNFTQueue) Len() int { return len(q.Reqs) }
