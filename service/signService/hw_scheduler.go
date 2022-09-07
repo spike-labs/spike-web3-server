@@ -3,12 +3,16 @@ package signService
 import (
 	"sort"
 	"spike-frame/config"
+	"spike-frame/constant"
+	"spike-frame/dao"
 	"spike-frame/model"
 	"sync"
 	"time"
 )
 
 type hotWalletScheduler struct {
+	gorm *dao.GormAccessor
+
 	workerLK sync.RWMutex
 	workers  []Worker
 
@@ -23,9 +27,17 @@ type hotWalletScheduler struct {
 
 func newScheduler() *hotWalletScheduler {
 	return &hotWalletScheduler{
-		workers:   make([]Worker, 0),
+		gorm:    dao.NewGormAccessor(constant.GormClient),
+		workers: make([]Worker, 0),
+
 		mintSched: make(chan *model.BatchMintReq),
-		mintQueue: &model.BatchMintQueue{},
+		mintQueue: &model.BatchMintQueue{Reqs: make([]*model.BatchMintReq, 0)},
+
+		tokenSched: make(chan *model.WithdrawTokenReq),
+		tokenQueue: &model.WithdrawTokenQueue{Reqs: make([]*model.WithdrawTokenReq, 0)},
+
+		nftSched: make(chan *model.WithdrawNFTReq),
+		nftQueue: &model.WithdrawNFTQueue{Reqs: make([]*model.WithdrawNFTReq, 0)},
 	}
 }
 
@@ -91,8 +103,17 @@ func (hw *hotWalletScheduler) runSchedule() {
 func (hw *hotWalletScheduler) schedMintTask() {
 	for _, queue := range hw.mintQueue.CheckExecTask() {
 		go func(q *model.BatchMintQueue) {
-			err := hw.pickRightWorker().BatchMint(q)
+			var txStatus int
+			uuids, TxHash, err := hw.pickRightWorker().BatchMint(q)
 			if err != nil {
+				txStatus = constant.TXFAILED
+				log.Error("===Spike log:", err)
+				return
+			}
+			txStatus = constant.ORDERHANDLED
+			err = hw.gorm.RecordTxHash(uuids, TxHash, txStatus)
+			if err != nil {
+				log.Error("===Spike log:", err)
 				return
 			}
 		}(queue)
@@ -102,8 +123,17 @@ func (hw *hotWalletScheduler) schedMintTask() {
 func (hw *hotWalletScheduler) schedTokenTask() {
 	for _, queue := range hw.tokenQueue.CheckExecTask() {
 		go func(q *model.WithdrawTokenQueue) {
-			err := hw.pickRightWorker().WithdrawToken(q)
+			var txStatus int
+			uuids, TxHash, err := hw.pickRightWorker().WithdrawToken(q)
 			if err != nil {
+				txStatus = constant.TXFAILED
+				log.Error("===Spike log:", err)
+				return
+			}
+			txStatus = constant.ORDERHANDLED
+			err = hw.gorm.RecordTxHash(uuids, TxHash, txStatus)
+			if err != nil {
+				log.Error("===Spike log:", err)
 				return
 			}
 		}(queue)
@@ -113,8 +143,17 @@ func (hw *hotWalletScheduler) schedTokenTask() {
 func (hw *hotWalletScheduler) schedNFTTask() {
 	for _, queue := range hw.nftQueue.CheckExecTask() {
 		go func(q *model.WithdrawNFTQueue) {
-			err := hw.pickRightWorker().WithdrawNFT(q)
+			var txStatus int
+			uuids, TxHash, err := hw.pickRightWorker().WithdrawNFT(q)
 			if err != nil {
+				txStatus = constant.TXFAILED
+				log.Error("===Spike log:", err)
+				return
+			}
+			txStatus = constant.ORDERHANDLED
+			err = hw.gorm.RecordTxHash(uuids, TxHash, txStatus)
+			if err != nil {
+				log.Error("===Spike log:", err)
 				return
 			}
 		}(queue)

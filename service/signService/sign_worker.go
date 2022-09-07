@@ -10,6 +10,7 @@ import (
 	"math/big"
 	chain "spike-frame/chain/abi"
 	"spike-frame/config"
+	"spike-frame/constant"
 	"spike-frame/model"
 	"spike-frame/response"
 	"spike-frame/util"
@@ -38,19 +39,20 @@ type Worker interface {
 }
 
 type WorkerCalls interface {
-	BatchMint(reqs *model.BatchMintQueue) error
-	WithdrawToken(reqs *model.WithdrawTokenQueue) error
-	WithdrawNFT(reqs *model.WithdrawNFTQueue) error
+	BatchMint(reqs *model.BatchMintQueue) ([]string, string, error)
+	WithdrawToken(reqs *model.WithdrawTokenQueue) ([]string, string, error)
+	WithdrawNFT(reqs *model.WithdrawNFTQueue) ([]string, string, error)
 }
 
 type AllRoundWorker struct {
 	BscClient  *ethclient.Client
 	httpClient *resty.Client
 	rdb        *redis.Client
-	info       *WorkerInfo
-	nLK        sync.Mutex
-	nftABI     abi.ABI
-	vaultABI   abi.ABI
+
+	info     *WorkerInfo
+	nLK      sync.Mutex
+	nftABI   abi.ABI
+	vaultABI abi.ABI
 }
 
 type WorkerInfo struct {
@@ -85,8 +87,6 @@ func NewAllRoundWorker() (*AllRoundWorker, error) {
 		serverUrl:     config.Cfg.SignWorkers[0].ServerUrl,
 	}
 
-	config.Cfg.SignWorkers = config.Cfg.SignWorkers[1:]
-
 	nonce, err := bscClient.PendingNonceAt(context.Background(), info.walletAddress)
 	if err != nil {
 		return nil, err
@@ -95,17 +95,17 @@ func NewAllRoundWorker() (*AllRoundWorker, error) {
 	worker := &AllRoundWorker{
 		BscClient:  bscClient,
 		httpClient: resty.New(),
-		rdb: redis.NewClient(&redis.Options{
-			Addr:     config.Cfg.Redis.Address,
-			Password: config.Cfg.Redis.Password,
-			DB:       0,
-		}),
-		info:     info,
-		nftABI:   nftAbi,
-		vaultABI: vaultAbi,
+		rdb:        constant.RedisClient,
+		info:       info,
+		nftABI:     nftAbi,
+		vaultABI:   vaultAbi,
 	}
 
 	worker.rdb.IncrBy(context.Background(), info.walletAddress.String()+":nonce", int64(nonce))
+
+	if len(config.Cfg.SignWorkers) > 1 {
+		config.Cfg.SignWorkers = config.Cfg.SignWorkers[1:]
+	}
 
 	return worker, nil
 }
@@ -154,7 +154,7 @@ func (w *AllRoundWorker) GetCNonce() (uint64, error) {
 	return nonce, nil
 }
 
-func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) error {
+func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
 	var res response.Response
@@ -162,28 +162,30 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) error {
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	CNonce, err := w.GetCNonce()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	if rNonce != CNonce {
-		return errors.New("nonce error")
+		return nil, "", errors.New("nonce error")
 	}
 
+	uuids := make([]string, 0)
 	tokenIds := make([]*big.Int, 0)
 	tokenUris := make([]string, 0)
 	for i := range queue.Reqs {
+		uuids = append(uuids, queue.Reqs[i].Uuid)
 		tokenIds = append(tokenIds, big.NewInt(queue.Reqs[i].TokenID))
 		tokenUris = append(tokenUris, queue.Reqs[i].TokenURI)
 	}
 
 	inputData, err := w.nftABI.Pack("batchMint0", tokenIds, config.Cfg.Contract.GameVaultAddress, tokenUris)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	spikeTx := &util.SpikeTx{
@@ -196,7 +198,7 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) error {
 
 	transaction, err := spikeTx.ConstructionTransaction()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	resp, err := w.httpClient.R().
@@ -204,12 +206,12 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) error {
 		SetBody(transaction).
 		Post(w.GetInfo().serverUrl)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	err = json.Unmarshal(resp.Body(), &res)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
@@ -219,15 +221,15 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) error {
 
 	err = w.BscClient.SendTransaction(context.Background(), &signedTransaction)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	w.IncrNonce()
 
-	return nil
+	return uuids, signedTransaction.Hash().String(), nil
 }
 
-func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) error {
+func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
 	var res response.Response
@@ -235,30 +237,32 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) error {
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	CNonce, err := w.GetCNonce()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	if rNonce != CNonce {
-		return errors.New("nonce error")
+		return nil, "", errors.New("nonce error")
 	}
 
+	uuids := make([]string, 0)
 	toAddrs := make([]common.Address, 0)
 	tokenAddrs := make([]common.Address, 0)
 	amounts := make([]*big.Int, 0)
 	for i := range queue.Reqs {
-		amounts = append(amounts, big.NewInt(queue.Reqs[i].Amount))
+		uuids = append(uuids, queue.Reqs[i].Uuid)
+		amounts = append(amounts, util.ToWei(queue.Reqs[i].Amount, 18))
 		toAddrs = append(toAddrs, queue.Reqs[i].ToAddress)
 		tokenAddrs = append(tokenAddrs, queue.Reqs[i].TokenAddress)
 	}
 
 	inputData, err := w.vaultABI.Pack("batchWithdraw0", tokenAddrs, toAddrs, amounts)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	spikeTx := &util.SpikeTx{
@@ -271,7 +275,7 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) error {
 
 	transaction, err := spikeTx.ConstructionTransaction()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	resp, err := w.httpClient.R().
@@ -279,12 +283,12 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) error {
 		SetBody(transaction).
 		Post(w.GetInfo().serverUrl)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	err = json.Unmarshal(resp.Body(), &res)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
@@ -294,15 +298,15 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) error {
 
 	err = w.BscClient.SendTransaction(context.Background(), transaction)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	w.IncrNonce()
 
-	return nil
+	return uuids, signedTransaction.Hash().String(), nil
 }
 
-func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) error {
+func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
 	var res response.Response
@@ -310,22 +314,24 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) error {
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	CNonce, err := w.GetCNonce()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	if rNonce != CNonce {
-		return errors.New("nonce error")
+		return nil, "", errors.New("nonce error")
 	}
 
+	uuids := make([]string, 0)
 	toAddrs := make([]common.Address, 0)
 	tokenAddrs := make([]common.Address, 0)
 	tokenIds := make([]*big.Int, 0)
 	for i := range queue.Reqs {
+		uuids = append(uuids, queue.Reqs[i].Uuid)
 		tokenIds = append(tokenIds, big.NewInt(queue.Reqs[i].TokenId))
 		toAddrs = append(toAddrs, queue.Reqs[i].ToAddress)
 		tokenAddrs = append(tokenAddrs, queue.Reqs[i].TokenAddress)
@@ -333,7 +339,7 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) error {
 
 	inputData, err := w.vaultABI.Pack("batchWithdrawNFT", tokenAddrs, toAddrs, tokenIds)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	spikeTx := &util.SpikeTx{
@@ -346,7 +352,7 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) error {
 
 	transaction, err := spikeTx.ConstructionTransaction()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	resp, err := w.httpClient.R().
@@ -354,12 +360,12 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) error {
 		SetBody(transaction).
 		Post(w.GetInfo().serverUrl)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	err = json.Unmarshal(resp.Body(), &res)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
@@ -369,9 +375,9 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) error {
 
 	err = w.BscClient.SendTransaction(context.Background(), transaction)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	w.IncrNonce()
-	return nil
+	return uuids, signedTransaction.Hash().String(), nil
 }

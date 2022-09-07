@@ -45,3 +45,9 @@ const (
 	NOTNOTIFIED = iota
 	NOTIFIED
 )
+
+// tx service
+const (
+	TOKENID      = "tokenId"
+	TOKENID_FROM = 10000000
+)
