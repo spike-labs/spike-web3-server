@@ -13,7 +13,6 @@ import (
 	"spike-frame/model"
 	"spike-frame/request"
 	"spike-frame/util"
-	"time"
 )
 
 var log = logger.Logger("sign")
@@ -74,10 +73,10 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error 
 		return err
 	}
 
-	err = w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", constant.EmptyAddress, config.Cfg.Contract.GameVaultAddress, "", 0, service.Cb, constant.GAMENFT_IMPORT, time.Now().UnixNano())
-	if err != nil {
-		return err
-	}
+	//err = w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", constant.EmptyAddress, config.Cfg.Contract.GameVaultAddress, "", 0, service.Cb, constant.GAMENFT_IMPORT, time.Now().UnixNano())
+	//if err != nil {
+	//	return err
+	//}
 	w.scheduler.Schedule(req)
 	return nil
 }
@@ -95,10 +94,10 @@ func (w *HotWalletManager) WithdrawToken(service request.BatchWithdrawalTokenSer
 		TokenAddress: common.HexToAddress(service.ContractAddress),
 	}
 
-	err := w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", config.Cfg.Contract.GameVaultAddress, service.ToAddress, service.Amount, 0, service.Cb, constant.GAMETOKEN_WITHDRAW, time.Now().UnixNano())
-	if err != nil {
-		return err
-	}
+	//err := w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", config.Cfg.Contract.GameVaultAddress, service.ToAddress, service.Amount, 0, service.Cb, constant.GAMETOKEN_WITHDRAW, time.Now().UnixNano())
+	//if err != nil {
+	//	return err
+	//}
 	w.scheduler.Schedule(req)
 	return nil
 }
@@ -116,10 +115,10 @@ func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService
 		TokenAddress: common.HexToAddress(service.ContractAddress),
 	}
 
-	err := w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", config.Cfg.Contract.GameVaultAddress, service.ToAddress, "", service.TokenID, service.Cb, constant.GAMENFT_TRANSFER, time.Now().UnixNano())
-	if err != nil {
-		return err
-	}
+	//err := w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", config.Cfg.Contract.GameVaultAddress, service.ToAddress, "", service.TokenID, service.Cb, constant.GAMENFT_TRANSFER, time.Now().UnixNano())
+	//if err != nil {
+	//	return err
+	//}
 
 	w.scheduler.Schedule(req)
 	return nil

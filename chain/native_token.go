@@ -62,7 +62,7 @@ func (bl *BNBListener) NewBlockFilter() error {
 			log.Error("new block subscribe err : ", err)
 		case header := <-newBlockChan:
 			height := new(big.Int).Sub(header.Number, big.NewInt(constant.BlockConfirmHeight))
-			cacheHeight, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, constant.RedisClient)
+			cacheHeight, _, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, constant.RedisClient)
 
 			if height.Int64()-1 > cacheHeight {
 				for i := cacheHeight + 1; i < height.Int64(); i++ {
@@ -150,7 +150,7 @@ func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
 			To:      tx.To().Hex(),
 			TxType:  int64(txType),
 			TxHash:  tx.Hash().Hex(),
-			Status:  int64(recp.Status),
+			Status:  int(recp.Status),
 			PayTime: int64(block.Time() * 1000),
 			Amount:  tx.Value().String(),
 		}

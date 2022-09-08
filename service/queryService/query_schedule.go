@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"golang.org/x/xerrors"
+	"spike-frame/config"
 	"spike-frame/model"
 	"spike-frame/util"
 	"sync"
@@ -16,14 +17,14 @@ var ResourceTable = map[model.TaskType]int{
 	model.NativeTxRecordQuery: 2,
 }
 
-func (s *Scheduler) getCounter(taskType model.TaskType) (util.Counter, error) {
+func (s *Scheduler) getCounter(taskType model.TaskType) (util.Counter, int, error) {
 	switch taskType {
 	case model.NftQuery:
-		return s.nftListCounter, nil
+		return s.nftListCounter, config.Cfg.Limit.NftLimit, nil
 	case model.NativeTxRecordQuery, model.Erc20TxRecordQuery:
-		return s.txRecordCounter, nil
+		return s.txRecordCounter, config.Cfg.Limit.TxRecordLimit, nil
 	default:
-		return util.Counter{}, xerrors.New(fmt.Sprintf("task type %s is not exist ", taskType.String()))
+		return util.Counter{}, 0, xerrors.New(fmt.Sprintf("task type %s is not exist ", taskType.String()))
 	}
 }
 
@@ -39,8 +40,8 @@ func NewScheduler() *Scheduler {
 	scheduler := &Scheduler{
 		schedule:        make(chan *model.QueryRequest),
 		rq:              &model.QueryRequestQueue{},
-		nftListCounter:  util.NewCounter(12, time.Second),
-		txRecordCounter: util.NewCounter(12, time.Second),
+		nftListCounter:  util.NewCounter(config.Cfg.Limit.NftLimit, time.Second),
+		txRecordCounter: util.NewCounter(config.Cfg.Limit.TxRecordLimit, time.Second),
 	}
 	go scheduler.trySched()
 	return scheduler
@@ -88,12 +89,12 @@ func (s *Scheduler) handleRequest() {
 	queueLen := s.rq.Len()
 	for i := 0; i < queueLen; i++ {
 		task := (*s.rq)[i]
-		counter, err := s.getCounter(task.Tp)
+		counter, rate, err := s.getCounter(task.Tp)
 		if err != nil {
 			log.Errorf("get Counter err :  %v", err.Error())
 			continue
 		}
-		if !counter.Ok(task.Weight) {
+		if !counter.Ok(task.Weight, rate) {
 			continue
 		}
 		s.rq.Remove(i)

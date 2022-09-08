@@ -6,12 +6,14 @@ import (
 	"spike-frame/request"
 	"spike-frame/response"
 	"spike-frame/service/signService"
+	"spike-frame/service/txService"
 )
 
 var log = logger.Logger("txApi")
 
 type TxGroup struct {
 	hwManager *signService.HotWalletManager
+	txSrv     *txService.TxService
 }
 
 func NewTxGroup() (TxGroup, error) {
@@ -22,6 +24,7 @@ func NewTxGroup() (TxGroup, error) {
 	}
 	return TxGroup{
 		hwManager: hwManager,
+		txSrv:     txService.TxSrv,
 	}, nil
 }
 
@@ -32,6 +35,11 @@ func (txGroup *TxGroup) InitTxGroup(g *gin.RouterGroup) {
 		hotWallet.POST("/mint", txGroup.BatchMint)
 		hotWallet.POST("/withdrawNFT", txGroup.BatchWithdrawNFT)
 		hotWallet.POST("withdrawToken", txGroup.BatchWithdrawToken)
+	}
+	client := g.Group("client")
+	{
+		client.POST("/rechargeToken", txGroup.RechargeToken)
+		client.POST("/importNft", txGroup.ImportNft)
 	}
 }
 
@@ -77,6 +85,40 @@ func (txGroup *TxGroup) BatchWithdrawToken(c *gin.Context) {
 	}
 
 	err = txGroup.hwManager.WithdrawToken(service)
+	if err != nil {
+		log.Error("=== Spike log: ", err)
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.Ok(c)
+}
+
+func (txGroup *TxGroup) RechargeToken(c *gin.Context) {
+	var service request.RechargeTokenService
+	err := c.ShouldBind(&service)
+	if err != nil {
+		log.Error("=== Spike log: ", err)
+		response.FailWithMessage("request params error", c)
+		return
+	}
+
+	err = txGroup.txSrv.RechargeToken(service)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.Ok(c)
+}
+
+func (txGroup *TxGroup) ImportNft(c *gin.Context) {
+	var service request.ImportNftService
+	err := c.ShouldBind(&service)
+	if err != nil {
+		log.Error("=== Spike log: ", err)
+		response.FailWithMessage("request params error", c)
+	}
+
+	err = txGroup.txSrv.ImportNft(service)
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage(err.Error(), c)
