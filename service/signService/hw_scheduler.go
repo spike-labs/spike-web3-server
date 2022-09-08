@@ -95,13 +95,14 @@ func (hw *hotWalletScheduler) runSchedule() {
 				hw.schedNFTTask()
 			}
 		}
+		ticker.Reset(time.Duration(config.Cfg.SignService.SchedInterval) * time.Minute)
 
 	}
 
 }
 
 func (hw *hotWalletScheduler) schedMintTask() {
-	for _, queue := range hw.mintQueue.CheckExecTask() {
+	for _, queue := range hw.CheckExecMintTask() {
 		go func(q *model.BatchMintQueue) {
 			var txStatus int
 			uuids, TxHash, err := hw.pickRightWorker().BatchMint(q)
@@ -121,7 +122,7 @@ func (hw *hotWalletScheduler) schedMintTask() {
 }
 
 func (hw *hotWalletScheduler) schedTokenTask() {
-	for _, queue := range hw.tokenQueue.CheckExecTask() {
+	for _, queue := range hw.CheckExecTokenTask() {
 		go func(q *model.WithdrawTokenQueue) {
 			var txStatus int
 			uuids, TxHash, err := hw.pickRightWorker().WithdrawToken(q)
@@ -141,7 +142,7 @@ func (hw *hotWalletScheduler) schedTokenTask() {
 }
 
 func (hw *hotWalletScheduler) schedNFTTask() {
-	for _, queue := range hw.nftQueue.CheckExecTask() {
+	for _, queue := range hw.CheckExecNFTTask() {
 		go func(q *model.WithdrawNFTQueue) {
 			var txStatus int
 			uuids, TxHash, err := hw.pickRightWorker().WithdrawNFT(q)
@@ -166,4 +167,83 @@ func (hw *hotWalletScheduler) pickRightWorker() Worker {
 	})
 
 	return hw.workers[0]
+}
+
+func (hw *hotWalletScheduler) CheckExecMintTask() []*model.BatchMintQueue {
+	taskNum := hw.mintQueue.Len()
+	taskQueues := make([]*model.BatchMintQueue, 0)
+	switch {
+
+	case taskNum > config.Cfg.SignService.TaskThreshold:
+
+		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
+
+			reqs := hw.mintQueue.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
+			taskQueues = append(taskQueues, &model.BatchMintQueue{Reqs: reqs})
+
+			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
+				reqs := hw.mintQueue.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
+				taskQueues = append(taskQueues, &model.BatchMintQueue{Reqs: reqs})
+			}
+		}
+		hw.mintQueue.Clear()
+		return taskQueues
+	case taskNum <= config.Cfg.SignService.TaskThreshold:
+		taskQueues = append(taskQueues, hw.mintQueue)
+		hw.mintQueue.Clear()
+		return taskQueues
+	}
+	return nil
+}
+
+func (hw *hotWalletScheduler) CheckExecTokenTask() []*model.WithdrawTokenQueue {
+	taskNum := hw.tokenQueue.Len()
+	taskQueues := make([]*model.WithdrawTokenQueue, 0)
+	switch {
+	case taskNum > config.Cfg.SignService.TaskThreshold:
+
+		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
+
+			reqs := hw.tokenQueue.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
+			taskQueues = append(taskQueues, &model.WithdrawTokenQueue{Reqs: reqs})
+
+			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
+				reqs := hw.tokenQueue.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
+				taskQueues = append(taskQueues, &model.WithdrawTokenQueue{Reqs: reqs})
+			}
+		}
+		hw.tokenQueue.Clear()
+		return taskQueues
+	case taskNum <= config.Cfg.SignService.TaskThreshold:
+		taskQueues = append(taskQueues, hw.tokenQueue)
+		hw.tokenQueue.Clear()
+		return taskQueues
+	}
+	return nil
+}
+
+func (hw *hotWalletScheduler) CheckExecNFTTask() []*model.WithdrawNFTQueue {
+	taskNum := hw.nftQueue.Len()
+	taskQueues := make([]*model.WithdrawNFTQueue, 0)
+	switch {
+	case taskNum > config.Cfg.SignService.TaskThreshold:
+
+		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
+
+			reqs := hw.nftQueue.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
+			taskQueues = append(taskQueues, &model.WithdrawNFTQueue{Reqs: reqs})
+
+			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
+				reqs := hw.nftQueue.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
+				taskQueues = append(taskQueues, &model.WithdrawNFTQueue{Reqs: reqs})
+			}
+		}
+		hw.nftQueue.Clear()
+		return taskQueues
+	case taskNum <= config.Cfg.SignService.TaskThreshold:
+		taskQueues = append(taskQueues, hw.nftQueue)
+		hw.nftQueue.Clear()
+		return taskQueues
+	}
+	return nil
 }
