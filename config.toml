@@ -30,11 +30,11 @@ port = "3309"
 dbName = "spike_frame_server"
 username = "root"
 password = "123456"
-maxIdleConns = 1
-maxOpenConns = 1
+maxIdleConns = 0
+maxOpenConns = 0
 
 [signService]
-taskThreshold = 100
+taskThreshold = 1000
 schedInterval = 5
 
 [[signWorkers]]
@@ -44,9 +44,6 @@ serverUrl = "111"
 [[signWorkers]]
 walletAddress = "0x550bB66C3050C2e9C5DC2b35aa924485b48B67d0"
 serverUrl = "111"
-
-[model]
-name = ["Soul", "Soul Tank"]
 
 [limit]
 nftLimit = 12

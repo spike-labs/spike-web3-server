@@ -13,14 +13,14 @@ type Counter struct {
 	lock  sync.Mutex
 }
 
-func (l *Counter) Ok(weight int) bool {
+func (l *Counter) Ok(weight, rate int) bool {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
 	if l.count > l.rate-1 {
 		now := time.Now()
 		if now.Sub(l.begin) >= l.cycle {
-			l.Reset(now)
+			l.Reset(now, rate)
 			return true
 		} else {
 			log.Infof("rate limit reached")
@@ -41,7 +41,8 @@ func NewCounter(r int, cycle time.Duration) Counter {
 	}
 }
 
-func (l *Counter) Reset(t time.Time) {
+func (l *Counter) Reset(t time.Time, rate int) {
 	l.begin = t
+	l.rate = rate
 	l.count = 0
 }

@@ -6,6 +6,7 @@ import (
 	"spike-frame/chain"
 	"spike-frame/config"
 	"spike-frame/constant"
+	"spike-frame/dao"
 	"spike-frame/initialize"
 )
 
@@ -14,6 +15,7 @@ func main() {
 	constant.Viper = config.InitViper()
 	constant.GormClient = initialize.GormMysql()
 	constant.RedisClient = cache.ConnectRedis()
+	constant.DbAccessor = dao.NewGormAccessor(constant.GormClient)
 	chain.NewBscListener()
 	initialize.RunServer()
 }

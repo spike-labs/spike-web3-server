@@ -3,6 +3,7 @@ module spike-frame
 go 1.17
 
 require (
+	github.com/BurntSushi/toml v1.2.0
 	github.com/ethereum/go-ethereum v1.10.23
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/fvbock/endless v0.0.0-20170109170031-447134032cb6

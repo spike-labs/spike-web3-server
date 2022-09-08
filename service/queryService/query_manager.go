@@ -46,18 +46,18 @@ func NewQueryManager() *QueryManager {
 }
 
 func (qm *QueryManager) QueryNftType(ctx context.Context, walletAddr string) ([]response.NftType, error) {
-	value, err := util.GetStringFromRedis(walletAddr+constant.NFTTYPESUFFIX, qm.redisClient)
+	value, isNil, err := util.GetStringFromRedis(walletAddr+constant.NFTTYPESUFFIX, qm.redisClient)
 	if err != nil {
 		return []response.NftType{}, err
 	}
-	if value == "" {
+	if isNil {
 		err = qm.queryNft(ctx, walletAddr)
 		if err != nil {
 			return []response.NftType{}, err
 		}
 	}
 
-	value, err = util.GetStringFromRedis(walletAddr+constant.NFTTYPESUFFIX, qm.redisClient)
+	value, isNil, err = util.GetStringFromRedis(walletAddr+constant.NFTTYPESUFFIX, qm.redisClient)
 	if err != nil {
 		return []response.NftType{}, err
 	}
@@ -71,18 +71,18 @@ func (qm *QueryManager) QueryNftType(ctx context.Context, walletAddr string) ([]
 
 func (qm *QueryManager) QueryNftList(ctx context.Context, walletAddr string, assetType string) ([]response.NftResult, error) {
 
-	value, err := util.GetStringFromRedis(walletAddr+constant.NFTLISTSUFFIX+assetType, qm.redisClient)
+	value, isNil, err := util.GetStringFromRedis(walletAddr+constant.NFTLISTSUFFIX+assetType, qm.redisClient)
 	if err != nil {
 		return []response.NftResult{}, err
 	}
-	if value == "" {
+	if isNil {
 		err = qm.queryNft(ctx, walletAddr)
 		if err != nil {
 			return []response.NftResult{}, err
 		}
 	}
 
-	value, err = util.GetStringFromRedis(walletAddr+constant.NFTLISTSUFFIX+assetType, qm.redisClient)
+	value, isNil, err = util.GetStringFromRedis(walletAddr+constant.NFTLISTSUFFIX+assetType, qm.redisClient)
 	if err != nil {
 		return []response.NftResult{}, err
 	}
@@ -109,19 +109,19 @@ func (qm *QueryManager) queryNft(ctx context.Context, walletAddr string) error {
 }
 
 func (qm *QueryManager) QueryNativeRecord(ctx context.Context, walletAddr string) (response.BscResult, error) {
-	value, err := util.GetStringFromRedis(walletAddr+constant.NATIVETXRECORDSUFFIX, qm.redisClient)
+	value, isNil, err := util.GetStringFromRedis(walletAddr+constant.NATIVETXRECORDSUFFIX, qm.redisClient)
 	if err != nil {
 		return response.BscResult{}, err
 	}
 
-	if value == "" {
+	if isNil {
 		err = qm.queryNativeTxRecord(ctx, walletAddr)
 		if err != nil {
 			return response.BscResult{}, err
 		}
 	}
 
-	value, err = util.GetStringFromRedis(walletAddr+constant.NATIVETXRECORDSUFFIX, qm.redisClient)
+	value, isNil, err = util.GetStringFromRedis(walletAddr+constant.NATIVETXRECORDSUFFIX, qm.redisClient)
 	if err != nil {
 		return response.BscResult{}, err
 	}
@@ -135,18 +135,18 @@ func (qm *QueryManager) QueryNativeRecord(ctx context.Context, walletAddr string
 
 func (qm *QueryManager) QueryERC20TxRecord(ctx context.Context, walletAddr string, contractAddr string) (response.BscResult, error) {
 
-	value, err := util.GetStringFromRedis(walletAddr+contractAddr+constant.ERC20TXRECORDSUFFIX, qm.redisClient)
+	value, isNil, err := util.GetStringFromRedis(walletAddr+contractAddr+constant.ERC20TXRECORDSUFFIX, qm.redisClient)
 	if err != nil {
 		return response.BscResult{}, err
 	}
-	if value == "" {
+	if isNil {
 		err = qm.queryERC20TxRecord(ctx, walletAddr, contractAddr)
 		if err != nil {
 			return response.BscResult{}, err
 		}
 	}
 
-	value, err = util.GetStringFromRedis(walletAddr+contractAddr+constant.ERC20TXRECORDSUFFIX, qm.redisClient)
+	value, isNil, err = util.GetStringFromRedis(walletAddr+contractAddr+constant.ERC20TXRECORDSUFFIX, qm.redisClient)
 	if err != nil {
 		return response.BscResult{}, err
 	}

@@ -137,7 +137,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 				To:      toAddr,
 				TxType:  int64(txType),
 				TxHash:  logEvent.TxHash.Hex(),
-				Status:  int64(recp.Status),
+				Status:  int(recp.Status),
 				PayTime: int64(block.Time() * 1000),
 				Amount:  input[0].(*big.Int).String(),
 			}
@@ -179,7 +179,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 				To:      toAddr,
 				TxType:  int64(txType),
 				TxHash:  logEvent.TxHash.Hex(),
-				Status:  int64(recp.Status),
+				Status:  int(recp.Status),
 				PayTime: int64(block.Time() * 1000),
 				Amount:  input[3].(*big.Int).String(),
 			}

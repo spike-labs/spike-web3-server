@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"os"
@@ -20,7 +21,6 @@ func InitViper() *viper.Viper {
 
 	v := viper.New()
 	v.SetConfigFile(configPath)
-	v.SetConfigType("toml")
 	err := v.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
@@ -29,14 +29,34 @@ func InitViper() *viper.Viper {
 
 	v.OnConfigChange(func(e fsnotify.Event) {
 		log.Info("config file changed:", e.Name)
-		if err := v.Unmarshal(&Cfg); err != nil {
-			log.Error(err)
+
+		file, err := os.Open(configPath)
+		switch {
+		case os.IsNotExist(err):
+			log.Errorf("%v", err)
+			return
+		case err != nil:
+			return
+		}
+		_, err = toml.NewDecoder(file).Decode(&Cfg)
+		if err != nil {
+			return
 		}
 		log.Infof("cfg: %+v", Cfg)
 	})
-	if err := v.Unmarshal(&Cfg); err != nil {
-		log.Error(err)
+
+	file, err := os.Open(configPath)
+	switch {
+	case os.IsNotExist(err):
+		panic("config is not exist")
+	case err != nil:
+		panic("config path error")
 	}
+	_, err = toml.NewDecoder(file).Decode(&Cfg)
+	if err != nil {
+		panic("init config err")
+	}
+
 	log.Infof("cfg: %+v", Cfg)
 	return v
 }

@@ -58,5 +58,8 @@ func RmKeyByPrefix(prefix string, client *redis.Client) {
 	if err != nil {
 		log.Error(err)
 	}
+	if len(keys) == 0 {
+		return
+	}
 	log.Error(client.Del(ctx, keys...).Err())
 }

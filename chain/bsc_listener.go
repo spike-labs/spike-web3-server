@@ -81,17 +81,17 @@ func (bl *BscListener) Run() {
 			log.Error("query now bnb_blockNum err :", err)
 			continue
 		}
-		if cacheHeight, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, constant.RedisClient); cacheHeight == 0 && err == nil {
+		cacheBlockNum, isNil, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, constant.RedisClient)
+		if err != nil {
+			log.Errorf("query redis err : %v", err)
+			return
+		}
+		if isNil {
 			log.Infof("blockNum is not exist")
 			util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, constant.RedisClient)
 			break
 		}
 
-		cacheBlockNum, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, constant.RedisClient)
-		if err != nil {
-			log.Error("query cache bnb_blockNum err : ", err)
-			continue
-		}
 		if cacheBlockNum >= int64(nowBlockNum)-constant.BlockConfirmHeight {
 			log.Infof("sync done")
 			break
@@ -101,7 +101,7 @@ func (bl *BscListener) Run() {
 			wg.Add(1)
 			go func(l Listener) {
 				defer wg.Done()
-				l.handlePastBlock(big.NewInt(int64(cacheBlockNum+1)), big.NewInt(int64(nowBlockNum-constant.BlockConfirmHeight)))
+				l.handlePastBlock(big.NewInt(cacheBlockNum+1), big.NewInt(int64(nowBlockNum-constant.BlockConfirmHeight)))
 			}(listener)
 		}
 		wg.Wait()

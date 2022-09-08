@@ -9,15 +9,26 @@ var log = logger.Logger("config")
 var Cfg Config
 
 type Config struct {
-	System      System       `toml:"system"`
-	Moralis     Moralis      `toml:"moralis"`
-	BscScan     BscScan      `toml:"bscscan"`
-	Contract    Contract     `toml:"contract"`
-	Redis       Redis        `toml:"redis"`
-	Chain       Chain        `toml:"chain"`
-	Mysql       Mysql        `toml:"mysql"`
-	SignService SignService  `toml:"signService"`
-	SignWorkers []SignWorker `toml:"signWorkers"`
+	System      System       `json:"system" toml:"system"`
+	Moralis     Moralis      `json:"moralis" toml:"moralis"`
+	BscScan     BscScan      `json:"bscscan" toml:"bscscan"`
+	Contract    Contract     `json:"contract" toml:"contract"`
+	Redis       Redis        `json:"redis" toml:"redis"`
+	Chain       Chain        `json:"chain" toml:"chain"`
+	Mysql       Mysql        `json:"mysql" toml:"mysql"`
+	SignService SignService  `json:"signService" toml:"signService"`
+	SignWorkers []SignWorker `json:"signWorkers" toml:"signWorkers"`
+	Model       Model        `json:"model" toml:"model"`
+	Limit       Limit        `json:"limit" toml:"limit"`
+}
+
+type Model struct {
+	Name []string `json:"name" toml:"name"`
+}
+
+type Limit struct {
+	NftLimit      int `json:"nftLimit" toml:"nftLimit"`
+	TxRecordLimit int `json:"txRecordLimit" toml:"txRecordLimit"`
 }
 
 type Mysql struct {
@@ -27,8 +38,8 @@ type Mysql struct {
 	Dbname       string `json:"db_name" toml:"dbName"`
 	Username     string `json:"username" toml:"username"`
 	Password     string `json:"password" toml:"password"`
-	MaxIdleConns int    `json:"max_idle_conns" toml:"maxIdleConns"`
-	MaxOpenConns int    `json:"max_open_conns" toml:"maxOpenConns"`
+	MaxIdleConns int    `json:"maxIdleConns" toml:"maxIdleConns"`
+	MaxOpenConns int    `json:"maxOpenConns" toml:"maxOpenConns"`
 }
 
 func (m *Mysql) Dsn() string {

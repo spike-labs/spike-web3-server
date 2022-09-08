@@ -18,19 +18,7 @@ func NewGormAccessor(db *gorm.DB) *GormAccessor {
 	}
 }
 
-func (g *GormAccessor) SaveTxCb(orderId, uuid, txHash, from, to, amount string, tokenId int64, cb string, txType, createTime int64) error {
-	tx := model.SpikeTx{
-		OrderId:    orderId,
-		Uuid:       uuid,
-		TxHash:     txHash,
-		From:       from,
-		To:         to,
-		Amount:     amount,
-		TokenId:    tokenId,
-		Cb:         cb,
-		TxType:     txType,
-		CreateTime: createTime,
-	}
+func (g *GormAccessor) SaveTxCb(tx model.SpikeTx) error {
 	return g.DB.Create(&tx).Error
 }
 
