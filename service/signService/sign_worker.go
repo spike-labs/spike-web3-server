@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/go-resty/resty/v2"
 	"math/big"
@@ -36,6 +35,7 @@ type Worker interface {
 	GetInfo() *WorkerInfo
 	Lock() bool
 	UnLock() uint64
+	SignatureTransaction(*types.Transaction) (*types.Transaction, error)
 }
 
 type WorkerCalls interface {
@@ -154,11 +154,33 @@ func (w *AllRoundWorker) GetCNonce() (uint64, error) {
 	return nonce, nil
 }
 
+func (w *AllRoundWorker) SignatureTransaction(unSignTX *types.Transaction) (*types.Transaction, error) {
+	var res response.Response
+	var signedTransaction types.Transaction
+
+	resp, err := w.httpClient.R().
+		SetHeader("Accept", "application/json").
+		SetBody(unSignTX).
+		Post(w.GetInfo().serverUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(resp.Body(), &res)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
+	if err != nil {
+		return nil, err
+	}
+	return &signedTransaction, nil
+}
+
 func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
-	var res response.Response
-	var signedTransaction types.Transaction
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {
@@ -196,30 +218,17 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) ([]string, strin
 		Nonce:     CNonce,
 	}
 
-	transaction, err := spikeTx.ConstructionTransaction()
+	unSignTransaction, err := spikeTx.ConstructionTransaction()
 	if err != nil {
 		return nil, "", err
 	}
 
-	resp, err := w.httpClient.R().
-		SetHeader("Accept", "application/json").
-		SetBody(transaction).
-		Post(w.GetInfo().serverUrl)
+	signedTransaction, err := w.SignatureTransaction(unSignTransaction)
 	if err != nil {
 		return nil, "", err
 	}
 
-	err = json.Unmarshal(resp.Body(), &res)
-	if err != nil {
-		return nil, "", err
-	}
-
-	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	err = w.BscClient.SendTransaction(context.Background(), &signedTransaction)
+	err = w.BscClient.SendTransaction(context.Background(), signedTransaction)
 	if err != nil {
 		return nil, "", err
 	}
@@ -232,8 +241,6 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) ([]string, strin
 func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
-	var res response.Response
-	var signedTransaction types.Transaction
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {
@@ -273,30 +280,17 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) ([]strin
 		Nonce:     CNonce,
 	}
 
-	transaction, err := spikeTx.ConstructionTransaction()
+	unSignTransaction, err := spikeTx.ConstructionTransaction()
 	if err != nil {
 		return nil, "", err
 	}
 
-	resp, err := w.httpClient.R().
-		SetHeader("Accept", "application/json").
-		SetBody(transaction).
-		Post(w.GetInfo().serverUrl)
+	signedTransaction, err := w.SignatureTransaction(unSignTransaction)
 	if err != nil {
 		return nil, "", err
 	}
 
-	err = json.Unmarshal(resp.Body(), &res)
-	if err != nil {
-		return nil, "", err
-	}
-
-	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	err = w.BscClient.SendTransaction(context.Background(), transaction)
+	err = w.BscClient.SendTransaction(context.Background(), signedTransaction)
 	if err != nil {
 		return nil, "", err
 	}
@@ -309,8 +303,6 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) ([]strin
 func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
-	var res response.Response
-	var signedTransaction types.Transaction
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {
@@ -350,30 +342,17 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) ([]string, s
 		Nonce:     CNonce,
 	}
 
-	transaction, err := spikeTx.ConstructionTransaction()
+	unSignTransaction, err := spikeTx.ConstructionTransaction()
 	if err != nil {
 		return nil, "", err
 	}
 
-	resp, err := w.httpClient.R().
-		SetHeader("Accept", "application/json").
-		SetBody(transaction).
-		Post(w.GetInfo().serverUrl)
+	signedTransaction, err := w.SignatureTransaction(unSignTransaction)
 	if err != nil {
 		return nil, "", err
 	}
 
-	err = json.Unmarshal(resp.Body(), &res)
-	if err != nil {
-		return nil, "", err
-	}
-
-	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	err = w.BscClient.SendTransaction(context.Background(), transaction)
+	err = w.BscClient.SendTransaction(context.Background(), signedTransaction)
 	if err != nil {
 		return nil, "", err
 	}

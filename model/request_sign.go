@@ -3,8 +3,6 @@ package model
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"sync"
-
-	"spike-frame/config"
 )
 
 type BatchMintReq struct {
@@ -44,33 +42,6 @@ func (q *BatchMintQueue) Clear() {
 
 func (q *BatchMintQueue) Len() int { return len(q.Reqs) }
 
-func (q *BatchMintQueue) CheckExecTask() []*BatchMintQueue {
-	taskNum := q.Len()
-	taskQueues := make([]*BatchMintQueue, 0)
-	switch {
-
-	case taskNum > config.Cfg.SignService.TaskThreshold:
-
-		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
-
-			reqs := q.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
-			taskQueues = append(taskQueues, &BatchMintQueue{Reqs: reqs})
-
-			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
-				reqs := q.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
-				taskQueues = append(taskQueues, &BatchMintQueue{Reqs: reqs})
-			}
-		}
-		q.Clear()
-		return taskQueues
-	case taskNum <= config.Cfg.SignService.TaskThreshold:
-		taskQueues = append(taskQueues, q)
-		q.Clear()
-		return taskQueues
-	}
-	return nil
-}
-
 type WithdrawTokenReq struct {
 	Uuid         string         `json:"uuid"`
 	ToAddress    common.Address `json:"to_address"`
@@ -102,32 +73,6 @@ func (q *WithdrawTokenQueue) Clear() {
 
 func (q *WithdrawTokenQueue) Len() int { return len(q.Reqs) }
 
-func (q *WithdrawTokenQueue) CheckExecTask() []*WithdrawTokenQueue {
-	taskNum := q.Len()
-	taskQueues := make([]*WithdrawTokenQueue, 0)
-	switch {
-	case taskNum > config.Cfg.SignService.TaskThreshold:
-
-		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
-
-			reqs := q.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
-			taskQueues = append(taskQueues, &WithdrawTokenQueue{Reqs: reqs})
-
-			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
-				reqs := q.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
-				taskQueues = append(taskQueues, &WithdrawTokenQueue{Reqs: reqs})
-			}
-		}
-		q.Clear()
-		return taskQueues
-	case taskNum <= config.Cfg.SignService.TaskThreshold:
-		taskQueues = append(taskQueues, q)
-		q.Clear()
-		return taskQueues
-	}
-	return nil
-}
-
 type WithdrawNFTReq struct {
 	Uuid         string         `json:"uuid"`
 	TokenId      int64          `json:"token_id"`
@@ -158,29 +103,3 @@ func (q *WithdrawNFTQueue) Clear() {
 }
 
 func (q *WithdrawNFTQueue) Len() int { return len(q.Reqs) }
-
-func (q *WithdrawNFTQueue) CheckExecTask() []*WithdrawNFTQueue {
-	taskNum := q.Len()
-	taskQueues := make([]*WithdrawNFTQueue, 0)
-	switch {
-	case taskNum > config.Cfg.SignService.TaskThreshold:
-
-		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
-
-			reqs := q.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
-			taskQueues = append(taskQueues, &WithdrawNFTQueue{Reqs: reqs})
-
-			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
-				reqs := q.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
-				taskQueues = append(taskQueues, &WithdrawNFTQueue{Reqs: reqs})
-			}
-		}
-		q.Clear()
-		return taskQueues
-	case taskNum <= config.Cfg.SignService.TaskThreshold:
-		taskQueues = append(taskQueues, q)
-		q.Clear()
-		return taskQueues
-	}
-	return nil
-}
