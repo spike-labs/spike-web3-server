@@ -49,5 +49,6 @@ const (
 // tx service
 const (
 	TOKENID      = "tokenId"
-	TOKENID_FROM = 10000000
+	TOKENID_FROM = 100000000
+	NONCE        = "nonce"
 )

@@ -12,32 +12,33 @@ type BatchMintReq struct {
 }
 
 type BatchMintQueue struct {
-	Reqs []*BatchMintReq
+	Reqs []BatchMintReq
 	qLK  sync.Mutex
 }
 
-func (q *BatchMintQueue) Push(x *BatchMintReq) {
+func (q *BatchMintQueue) Push(x BatchMintReq) {
 	q.qLK.Lock()
 	defer q.qLK.Unlock()
 	item := x
 	q.Reqs = append(q.Reqs, item)
 }
 
-func (q *BatchMintQueue) Remove(i int) *BatchMintReq {
+func (q *BatchMintQueue) Remove(i int) BatchMintReq {
 	q.qLK.Lock()
 	defer q.qLK.Unlock()
 	old := q.Reqs
 	n := len(old)
 	item := old[i]
 	old[i] = old[n-1]
-	old[n-1] = nil
+	old[n-1] = BatchMintReq{}
 	q.Reqs = old[0 : n-1]
 	return item
 }
+
 func (q *BatchMintQueue) Clear() {
 	q.qLK.Lock()
 	defer q.qLK.Unlock()
-	q = &BatchMintQueue{Reqs: make([]*BatchMintReq, 0)}
+	q.Reqs = make([]BatchMintReq, 0)
 }
 
 func (q *BatchMintQueue) Len() int { return len(q.Reqs) }
@@ -50,25 +51,25 @@ type WithdrawTokenReq struct {
 }
 type WithdrawTokenQueue struct {
 	wLK  sync.Mutex
-	Reqs []*WithdrawTokenReq
+	Reqs []WithdrawTokenReq
 }
 
-func (q *WithdrawTokenQueue) Push(x *WithdrawTokenReq) {
+func (q *WithdrawTokenQueue) Push(x WithdrawTokenReq) {
 	item := x
 	q.Reqs = append(q.Reqs, item)
 }
 
-func (q *WithdrawTokenQueue) Remove(i int) *WithdrawTokenReq {
+func (q *WithdrawTokenQueue) Remove(i int) WithdrawTokenReq {
 	old := q.Reqs
 	n := len(old)
 	item := old[i]
 	old[i] = old[n-1]
-	old[n-1] = nil
+	old[n-1] = WithdrawTokenReq{}
 	q.Reqs = old[0 : n-1]
 	return item
 }
 func (q *WithdrawTokenQueue) Clear() {
-	q = &WithdrawTokenQueue{Reqs: make([]*WithdrawTokenReq, 0)}
+	q.Reqs = make([]WithdrawTokenReq, 0)
 }
 
 func (q *WithdrawTokenQueue) Len() int { return len(q.Reqs) }
@@ -81,25 +82,25 @@ type WithdrawNFTReq struct {
 }
 type WithdrawNFTQueue struct {
 	wLK  sync.Mutex
-	Reqs []*WithdrawNFTReq
+	Reqs []WithdrawNFTReq
 }
 
-func (q *WithdrawNFTQueue) Push(x *WithdrawNFTReq) {
+func (q *WithdrawNFTQueue) Push(x WithdrawNFTReq) {
 	item := x
 	q.Reqs = append(q.Reqs, item)
 }
 
-func (q *WithdrawNFTQueue) Remove(i int) *WithdrawNFTReq {
+func (q *WithdrawNFTQueue) Remove(i int) WithdrawNFTReq {
 	old := q.Reqs
 	n := len(old)
 	item := old[i]
 	old[i] = old[n-1]
-	old[n-1] = nil
+	old[n-1] = WithdrawNFTReq{}
 	q.Reqs = old[0 : n-1]
 	return item
 }
 func (q *WithdrawNFTQueue) Clear() {
-	q = &WithdrawNFTQueue{Reqs: make([]*WithdrawNFTReq, 0)}
+	q.Reqs = make([]WithdrawNFTReq, 0)
 }
 
 func (q *WithdrawNFTQueue) Len() int { return len(q.Reqs) }

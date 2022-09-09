@@ -11,6 +11,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/model"
+	"spike-frame/request"
 	"spike-frame/response"
 	"spike-frame/util"
 	"strings"
@@ -34,14 +35,14 @@ type Worker interface {
 	WorkerCalls
 	GetInfo() *WorkerInfo
 	Lock() bool
-	UnLock() uint64
+	UnLock()
 	SignatureTransaction(*types.Transaction) (*types.Transaction, error)
 }
 
 type WorkerCalls interface {
-	BatchMint(reqs *model.BatchMintQueue) ([]string, string, error)
-	WithdrawToken(reqs *model.WithdrawTokenQueue) ([]string, string, error)
-	WithdrawNFT(reqs *model.WithdrawNFTQueue) ([]string, string, error)
+	BatchMint(reqs []model.BatchMintReq) ([]string, string, error)
+	WithdrawToken(reqs []model.WithdrawTokenReq) ([]string, string, error)
+	WithdrawNFT(reqs []model.WithdrawNFTReq) ([]string, string, error)
 }
 
 type AllRoundWorker struct {
@@ -56,7 +57,7 @@ type AllRoundWorker struct {
 }
 
 type WorkerInfo struct {
-	walletAddress common.Address
+	walletAddress string
 	serverUrl     string
 	TaskNum       uint32
 }
@@ -83,13 +84,8 @@ func NewAllRoundWorker() (*AllRoundWorker, error) {
 	}
 
 	info := &WorkerInfo{
-		walletAddress: common.HexToAddress(config.Cfg.SignWorkers[0].WalletAddress),
+		walletAddress: config.Cfg.SignWorkers[0].WalletAddress,
 		serverUrl:     config.Cfg.SignWorkers[0].ServerUrl,
-	}
-
-	nonce, err := bscClient.PendingNonceAt(context.Background(), info.walletAddress)
-	if err != nil {
-		return nil, err
 	}
 
 	worker := &AllRoundWorker{
@@ -101,11 +97,12 @@ func NewAllRoundWorker() (*AllRoundWorker, error) {
 		vaultABI:   vaultAbi,
 	}
 
-	worker.rdb.IncrBy(context.Background(), info.walletAddress.String()+":nonce", int64(nonce))
-
-	if len(config.Cfg.SignWorkers) > 1 {
-		config.Cfg.SignWorkers = config.Cfg.SignWorkers[1:]
+	CNonce, err := worker.GetCNonce()
+	if err != nil {
+		return nil, err
 	}
+
+	worker.rdb.Set(context.Background(), info.walletAddress+constant.NONCE, int64(CNonce), 0)
 
 	return worker, nil
 }
@@ -115,31 +112,29 @@ func (w *AllRoundWorker) GetInfo() *WorkerInfo {
 }
 
 func (w *AllRoundWorker) Lock() bool {
-	w.nLK.Lock()
-	defer w.nLK.Unlock()
-	bool, err := w.rdb.SetNX(context.Background(), w.GetInfo().walletAddress.String(), 1, 10*time.Second).Result()
+	lock, err := util.Lock(w.GetInfo().walletAddress, 1, 10*time.Second, w.rdb)
 	if err != nil {
 		log.Error("===Spike log:", err)
 		return false
 	}
-	return bool
+	return lock
 }
 
-func (w *AllRoundWorker) UnLock() uint64 {
-	nums, err := w.rdb.Del(context.Background(), w.GetInfo().walletAddress.String()).Result()
+func (w *AllRoundWorker) UnLock() {
+	err := util.UnLock(w.GetInfo().walletAddress, w.rdb)
 	if err != nil {
 		log.Error("===Spike log:", err)
-		return 0
+		return
 	}
-	return uint64(nums)
+	return
 }
 
 func (w *AllRoundWorker) IncrNonce() {
-	w.rdb.Incr(context.Background(), w.GetInfo().walletAddress.String()+":nonce")
+	w.rdb.Incr(context.Background(), w.GetInfo().walletAddress+constant.NONCE)
 }
 
 func (w *AllRoundWorker) GetRNonce() (uint64, error) {
-	nonce, err := w.rdb.Get(context.Background(), w.GetInfo().walletAddress.String()+":nonce").Int64()
+	nonce, err := w.rdb.Get(context.Background(), w.GetInfo().walletAddress+constant.NONCE).Int64()
 	if err != nil {
 		return 0, err
 	}
@@ -147,7 +142,7 @@ func (w *AllRoundWorker) GetRNonce() (uint64, error) {
 }
 
 func (w *AllRoundWorker) GetCNonce() (uint64, error) {
-	nonce, err := w.BscClient.PendingNonceAt(context.Background(), w.GetInfo().walletAddress)
+	nonce, err := w.BscClient.PendingNonceAt(context.Background(), common.HexToAddress(w.GetInfo().walletAddress))
 	if err != nil {
 		return 0, err
 	}
@@ -160,7 +155,7 @@ func (w *AllRoundWorker) SignatureTransaction(unSignTX *types.Transaction) (*typ
 
 	resp, err := w.httpClient.R().
 		SetHeader("Accept", "application/json").
-		SetBody(unSignTX).
+		SetBody(&request.SignTXService{Tx: unSignTX}).
 		Post(w.GetInfo().serverUrl)
 	if err != nil {
 		return nil, err
@@ -178,7 +173,7 @@ func (w *AllRoundWorker) SignatureTransaction(unSignTX *types.Transaction) (*typ
 	return &signedTransaction, nil
 }
 
-func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) ([]string, string, error) {
+func (w *AllRoundWorker) BatchMint(reqs []model.BatchMintReq) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
 
@@ -199,13 +194,13 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) ([]string, strin
 	uuids := make([]string, 0)
 	tokenIds := make([]*big.Int, 0)
 	tokenUris := make([]string, 0)
-	for i := range queue.Reqs {
-		uuids = append(uuids, queue.Reqs[i].Uuid)
-		tokenIds = append(tokenIds, big.NewInt(queue.Reqs[i].TokenID))
-		tokenUris = append(tokenUris, queue.Reqs[i].TokenURI)
+	for i := range reqs {
+		uuids = append(uuids, reqs[i].Uuid)
+		tokenIds = append(tokenIds, big.NewInt(reqs[i].TokenID))
+		tokenUris = append(tokenUris, reqs[i].TokenURI)
 	}
 
-	inputData, err := w.nftABI.Pack("batchMint0", tokenIds, config.Cfg.Contract.GameVaultAddress, tokenUris)
+	inputData, err := w.nftABI.Pack("batchMint0", tokenIds, common.HexToAddress(config.Cfg.Contract.GameVaultAddress), tokenUris)
 	if err != nil {
 		return nil, "", err
 	}
@@ -214,7 +209,7 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) ([]string, strin
 		Data:      inputData,
 		To:        config.Cfg.Contract.GameNftAddress,
 		BscClient: w.BscClient,
-		From:      w.info.walletAddress,
+		From:      common.HexToAddress(w.info.walletAddress),
 		Nonce:     CNonce,
 	}
 
@@ -238,7 +233,7 @@ func (w *AllRoundWorker) BatchMint(queue *model.BatchMintQueue) ([]string, strin
 	return uuids, signedTransaction.Hash().String(), nil
 }
 
-func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) ([]string, string, error) {
+func (w *AllRoundWorker) WithdrawToken(reqs []model.WithdrawTokenReq) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
 
@@ -260,11 +255,11 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) ([]strin
 	toAddrs := make([]common.Address, 0)
 	tokenAddrs := make([]common.Address, 0)
 	amounts := make([]*big.Int, 0)
-	for i := range queue.Reqs {
-		uuids = append(uuids, queue.Reqs[i].Uuid)
-		amounts = append(amounts, util.ToWei(queue.Reqs[i].Amount, 18))
-		toAddrs = append(toAddrs, queue.Reqs[i].ToAddress)
-		tokenAddrs = append(tokenAddrs, queue.Reqs[i].TokenAddress)
+	for i := range reqs {
+		uuids = append(uuids, reqs[i].Uuid)
+		amounts = append(amounts, util.ToWei(reqs[i].Amount, 18))
+		toAddrs = append(toAddrs, reqs[i].ToAddress)
+		tokenAddrs = append(tokenAddrs, reqs[i].TokenAddress)
 	}
 
 	inputData, err := w.vaultABI.Pack("batchWithdraw0", tokenAddrs, toAddrs, amounts)
@@ -276,7 +271,7 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) ([]strin
 		Data:      inputData,
 		To:        config.Cfg.Contract.GameVaultAddress,
 		BscClient: w.BscClient,
-		From:      w.info.walletAddress,
+		From:      common.HexToAddress(w.info.walletAddress),
 		Nonce:     CNonce,
 	}
 
@@ -300,7 +295,7 @@ func (w *AllRoundWorker) WithdrawToken(queue *model.WithdrawTokenQueue) ([]strin
 	return uuids, signedTransaction.Hash().String(), nil
 }
 
-func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) ([]string, string, error) {
+func (w *AllRoundWorker) WithdrawNFT(reqs []model.WithdrawNFTReq) ([]string, string, error) {
 	w.Lock()
 	defer w.UnLock()
 
@@ -322,11 +317,11 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) ([]string, s
 	toAddrs := make([]common.Address, 0)
 	tokenAddrs := make([]common.Address, 0)
 	tokenIds := make([]*big.Int, 0)
-	for i := range queue.Reqs {
-		uuids = append(uuids, queue.Reqs[i].Uuid)
-		tokenIds = append(tokenIds, big.NewInt(queue.Reqs[i].TokenId))
-		toAddrs = append(toAddrs, queue.Reqs[i].ToAddress)
-		tokenAddrs = append(tokenAddrs, queue.Reqs[i].TokenAddress)
+	for i := range reqs {
+		uuids = append(uuids, reqs[i].Uuid)
+		tokenIds = append(tokenIds, big.NewInt(reqs[i].TokenId))
+		toAddrs = append(toAddrs, reqs[i].ToAddress)
+		tokenAddrs = append(tokenAddrs, reqs[i].TokenAddress)
 	}
 
 	inputData, err := w.vaultABI.Pack("batchWithdrawNFT", tokenAddrs, toAddrs, tokenIds)
@@ -338,7 +333,7 @@ func (w *AllRoundWorker) WithdrawNFT(queue *model.WithdrawNFTQueue) ([]string, s
 		Data:      inputData,
 		To:        config.Cfg.Contract.GameVaultAddress,
 		BscClient: w.BscClient,
-		From:      w.info.walletAddress,
+		From:      common.HexToAddress(w.info.walletAddress),
 		Nonce:     CNonce,
 	}
 

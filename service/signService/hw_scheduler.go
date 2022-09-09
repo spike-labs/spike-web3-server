@@ -4,17 +4,17 @@ import (
 	"sort"
 	"spike-frame/config"
 	"spike-frame/constant"
-	"spike-frame/dao"
+	"spike-frame/game"
 	"spike-frame/model"
 	"sync"
 	"time"
 )
 
 type hotWalletScheduler struct {
-	gorm *dao.GormAccessor
+	gorm game.TxTracker
 
-	workerLK sync.RWMutex
-	workers  []Worker
+	taskLK  sync.RWMutex
+	workers []Worker
 
 	mintSched  chan *model.BatchMintReq
 	tokenSched chan *model.WithdrawTokenReq
@@ -27,17 +27,17 @@ type hotWalletScheduler struct {
 
 func newScheduler() *hotWalletScheduler {
 	return &hotWalletScheduler{
-		gorm:    dao.NewGormAccessor(constant.GormClient),
+		gorm:    constant.DbAccessor,
 		workers: make([]Worker, 0),
 
 		mintSched: make(chan *model.BatchMintReq),
-		mintQueue: &model.BatchMintQueue{Reqs: make([]*model.BatchMintReq, 0)},
+		mintQueue: &model.BatchMintQueue{Reqs: make([]model.BatchMintReq, 0)},
 
 		tokenSched: make(chan *model.WithdrawTokenReq),
-		tokenQueue: &model.WithdrawTokenQueue{Reqs: make([]*model.WithdrawTokenReq, 0)},
+		tokenQueue: &model.WithdrawTokenQueue{Reqs: make([]model.WithdrawTokenReq, 0)},
 
 		nftSched: make(chan *model.WithdrawNFTReq),
-		nftQueue: &model.WithdrawNFTQueue{Reqs: make([]*model.WithdrawNFTReq, 0)},
+		nftQueue: &model.WithdrawNFTQueue{Reqs: make([]model.WithdrawNFTReq, 0)},
 	}
 }
 
@@ -62,21 +62,21 @@ func (hw *hotWalletScheduler) runSchedule() {
 	for {
 		select {
 		case req := <-hw.mintSched:
-			hw.mintQueue.Push(req)
+			hw.mintQueue.Push(*req)
 			if hw.mintQueue.Len() < config.Cfg.SignService.TaskThreshold {
 				break
 			}
 			hw.schedMintTask()
 
 		case req := <-hw.tokenSched:
-			hw.tokenQueue.Push(req)
+			hw.tokenQueue.Push(*req)
 			if hw.tokenQueue.Len() < config.Cfg.SignService.TaskThreshold {
 				break
 			}
 			hw.schedTokenTask()
 
 		case req := <-hw.nftSched:
-			hw.nftQueue.Push(req)
+			hw.nftQueue.Push(*req)
 			if hw.nftQueue.Len() < config.Cfg.SignService.TaskThreshold {
 				break
 			}
@@ -102,61 +102,64 @@ func (hw *hotWalletScheduler) runSchedule() {
 }
 
 func (hw *hotWalletScheduler) schedMintTask() {
-	for _, queue := range hw.CheckExecMintTask() {
-		go func(q *model.BatchMintQueue) {
+	for _, reqs := range hw.CheckExecMintTask() {
+		go func(q []model.BatchMintReq) {
 			var txStatus int
 			uuids, TxHash, err := hw.pickRightWorker().BatchMint(q)
 			if err != nil {
 				txStatus = constant.TXFAILED
-				log.Error("===Spike log:", err)
+				log.Error("===Spike log:filed exec batchMint. error: ", err)
 				return
 			}
 			txStatus = constant.ORDERHANDLED
 			err = hw.gorm.RecordTxHash(uuids, TxHash, txStatus)
 			if err != nil {
-				log.Error("===Spike log:", err)
+				log.Error("===Spike log:filed exec batchMint. error: ", err)
 				return
 			}
-		}(queue)
+			log.Info("===Spike log: success exec batchMint")
+		}(reqs)
 	}
 }
 
 func (hw *hotWalletScheduler) schedTokenTask() {
 	for _, queue := range hw.CheckExecTokenTask() {
-		go func(q *model.WithdrawTokenQueue) {
+		go func(q []model.WithdrawTokenReq) {
 			var txStatus int
 			uuids, TxHash, err := hw.pickRightWorker().WithdrawToken(q)
 			if err != nil {
 				txStatus = constant.TXFAILED
-				log.Error("===Spike log:", err)
+				log.Error("===Spike log:filed exec batchWithdrawToken. error :", err)
 				return
 			}
 			txStatus = constant.ORDERHANDLED
 			err = hw.gorm.RecordTxHash(uuids, TxHash, txStatus)
 			if err != nil {
-				log.Error("===Spike log:", err)
+				log.Error("===Spike log:filed exec batchWithdrawToken. error :", err)
 				return
 			}
+			log.Info("===Spike log: success exec batchWithdrawToken")
 		}(queue)
 	}
 }
 
 func (hw *hotWalletScheduler) schedNFTTask() {
 	for _, queue := range hw.CheckExecNFTTask() {
-		go func(q *model.WithdrawNFTQueue) {
+		go func(q []model.WithdrawNFTReq) {
 			var txStatus int
 			uuids, TxHash, err := hw.pickRightWorker().WithdrawNFT(q)
 			if err != nil {
 				txStatus = constant.TXFAILED
-				log.Error("===Spike log:", err)
+				log.Error("===Spike log:filed exec batchWithdrawNFT. error: ", err)
 				return
 			}
 			txStatus = constant.ORDERHANDLED
 			err = hw.gorm.RecordTxHash(uuids, TxHash, txStatus)
 			if err != nil {
-				log.Error("===Spike log:", err)
+				log.Error("===Spike log:filed exec batchWithdrawNFT. error: ", err)
 				return
 			}
+			log.Info("===Spike log: success exec batchWithdrawNFT")
 		}(queue)
 	}
 }
@@ -169,9 +172,11 @@ func (hw *hotWalletScheduler) pickRightWorker() Worker {
 	return hw.workers[0]
 }
 
-func (hw *hotWalletScheduler) CheckExecMintTask() []*model.BatchMintQueue {
+func (hw *hotWalletScheduler) CheckExecMintTask() [][]model.BatchMintReq {
+	hw.taskLK.Lock()
+	defer hw.taskLK.Unlock()
 	taskNum := hw.mintQueue.Len()
-	taskQueues := make([]*model.BatchMintQueue, 0)
+	taskQueues := make([][]model.BatchMintReq, 0)
 	switch {
 
 	case taskNum > config.Cfg.SignService.TaskThreshold:
@@ -179,69 +184,75 @@ func (hw *hotWalletScheduler) CheckExecMintTask() []*model.BatchMintQueue {
 		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
 
 			reqs := hw.mintQueue.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
-			taskQueues = append(taskQueues, &model.BatchMintQueue{Reqs: reqs})
+			taskQueues = append(taskQueues, reqs)
 
 			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
 				reqs := hw.mintQueue.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
-				taskQueues = append(taskQueues, &model.BatchMintQueue{Reqs: reqs})
+				taskQueues = append(taskQueues, reqs)
 			}
 		}
 		hw.mintQueue.Clear()
 		return taskQueues
 	case taskNum <= config.Cfg.SignService.TaskThreshold:
-		taskQueues = append(taskQueues, hw.mintQueue)
+		taskQueues = append(taskQueues, hw.mintQueue.Reqs)
 		hw.mintQueue.Clear()
 		return taskQueues
 	}
 	return nil
 }
 
-func (hw *hotWalletScheduler) CheckExecTokenTask() []*model.WithdrawTokenQueue {
+func (hw *hotWalletScheduler) CheckExecTokenTask() [][]model.WithdrawTokenReq {
+	hw.taskLK.Lock()
+	defer hw.taskLK.Unlock()
+
 	taskNum := hw.tokenQueue.Len()
-	taskQueues := make([]*model.WithdrawTokenQueue, 0)
+	taskQueues := make([][]model.WithdrawTokenReq, 0)
 	switch {
 	case taskNum > config.Cfg.SignService.TaskThreshold:
 
 		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
 
 			reqs := hw.tokenQueue.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
-			taskQueues = append(taskQueues, &model.WithdrawTokenQueue{Reqs: reqs})
+			taskQueues = append(taskQueues, reqs)
 
 			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
 				reqs := hw.tokenQueue.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
-				taskQueues = append(taskQueues, &model.WithdrawTokenQueue{Reqs: reqs})
+				taskQueues = append(taskQueues, reqs)
 			}
 		}
 		hw.tokenQueue.Clear()
 		return taskQueues
 	case taskNum <= config.Cfg.SignService.TaskThreshold:
-		taskQueues = append(taskQueues, hw.tokenQueue)
+		taskQueues = append(taskQueues, hw.tokenQueue.Reqs)
 		hw.tokenQueue.Clear()
 		return taskQueues
 	}
 	return nil
 }
 
-func (hw *hotWalletScheduler) CheckExecNFTTask() []*model.WithdrawNFTQueue {
+func (hw *hotWalletScheduler) CheckExecNFTTask() [][]model.WithdrawNFTReq {
+	hw.taskLK.Lock()
+	defer hw.taskLK.Unlock()
+
 	taskNum := hw.nftQueue.Len()
-	taskQueues := make([]*model.WithdrawNFTQueue, 0)
+	taskQueues := make([][]model.WithdrawNFTReq, 0)
 	switch {
 	case taskNum > config.Cfg.SignService.TaskThreshold:
 
 		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
 
 			reqs := hw.nftQueue.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
-			taskQueues = append(taskQueues, &model.WithdrawNFTQueue{Reqs: reqs})
+			taskQueues = append(taskQueues, reqs)
 
 			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
 				reqs := hw.nftQueue.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
-				taskQueues = append(taskQueues, &model.WithdrawNFTQueue{Reqs: reqs})
+				taskQueues = append(taskQueues, reqs)
 			}
 		}
 		hw.nftQueue.Clear()
 		return taskQueues
 	case taskNum <= config.Cfg.SignService.TaskThreshold:
-		taskQueues = append(taskQueues, hw.nftQueue)
+		taskQueues = append(taskQueues, hw.nftQueue.Reqs)
 		hw.nftQueue.Clear()
 		return taskQueues
 	}

@@ -9,13 +9,26 @@ import (
 	"time"
 )
 
-func SetFromRedis(key string, value interface{}, duration time.Duration, client *redis.Client) {
+func SetFromRedis(key string, value interface{}, duration time.Duration, client *redis.Client) error {
 	key = strings.ToLower(key)
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 	if err := client.Set(ctx, key, value, duration).Err(); err != nil {
 		log.Errorf("redis set key : %s value %v : err : %v", key, value, err)
+		return err
 	}
+	return nil
+}
+
+func IncrFromRedis(key string, client *redis.Client) error {
+	key = strings.ToLower(key)
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	if err := client.Incr(ctx, key).Err(); err != nil {
+		log.Errorf("redis set key : %s : err : %v", key, err)
+		return err
+	}
+	return nil
 }
 
 func GetStringFromRedis(key string, client *redis.Client) (string, bool, error) {
@@ -64,4 +77,28 @@ func RmKeyByPrefix(prefix string, client *redis.Client) {
 	if err := client.Del(ctx, keys...).Err(); err != nil {
 		log.Errorf("delete redis key err : %v", err)
 	}
+}
+
+func Lock(key string, value interface{}, duration time.Duration, client *redis.Client) (bool, error) {
+	key = strings.ToLower(key)
+
+	result, err := client.SetNX(context.Background(), key, value, duration).Result()
+
+	if err != nil {
+		log.Errorf("redis lock key : %s value %v : err : %v", key, value, err)
+		return false, err
+	}
+
+	return result, nil
+}
+
+func UnLock(key string, client *redis.Client) error {
+	key = strings.ToLower(key)
+
+	_, err := client.Del(context.Background(), key).Result()
+	if err != nil {
+		log.Errorf("redis unLock key : %s err : %v", key, err)
+		return err
+	}
+	return nil
 }
