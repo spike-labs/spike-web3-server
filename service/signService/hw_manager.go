@@ -1,7 +1,6 @@
 package signService
 
 import (
-	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-redis/redis/v8"
@@ -9,24 +8,25 @@ import (
 	logger "github.com/ipfs/go-log"
 	"spike-frame/config"
 	"spike-frame/constant"
-	"spike-frame/dao"
+	"spike-frame/game"
 	"spike-frame/model"
 	"spike-frame/request"
 	"spike-frame/util"
+	"time"
 )
 
 var log = logger.Logger("sign")
 
 type HotWalletManager struct {
 	scheduler *hotWalletScheduler
-	gorm      *dao.GormAccessor
+	gorm      game.TxTracker
 	rdb       *redis.Client
 }
 
 func NewHWManager() (*HotWalletManager, error) {
 	m := &HotWalletManager{
 		scheduler: newScheduler(),
-		gorm:      dao.NewGormAccessor(constant.GormClient),
+		gorm:      constant.DbAccessor,
 		rdb:       constant.RedisClient,
 	}
 
@@ -36,7 +36,10 @@ func NewHWManager() (*HotWalletManager, error) {
 	}
 
 	if isNil {
-		util.SetFromRedis(constant.TOKENID, constant.TOKENID_FROM, 0, m.rdb)
+		err := util.SetFromRedis(constant.TOKENID, constant.TOKENID_FROM, 0, m.rdb)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for i := 0; i < len(config.Cfg.SignWorkers); i++ {
@@ -68,15 +71,25 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error 
 		TokenURI: service.TokenURI,
 		TokenID:  TokenId,
 	}
-	err = w.rdb.Incr(context.Background(), constant.TOKENID).Err()
+
+	err = util.IncrFromRedis(constant.TOKENID, w.rdb)
 	if err != nil {
 		return err
 	}
 
-	//err = w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", constant.EmptyAddress, config.Cfg.Contract.GameVaultAddress, "", 0, service.Cb, constant.GAMENFT_IMPORT, time.Now().UnixNano())
-	//if err != nil {
-	//	return err
-	//}
+	err = w.gorm.SaveTxCb(model.SpikeTx{
+		OrderId:    service.OrderId,
+		Uuid:       req.Uuid,
+		From:       constant.EmptyAddress,
+		To:         config.Cfg.Contract.GameVaultAddress,
+		Cb:         service.Cb,
+		TxType:     constant.GAMENFT_TRANSFER,
+		CreateTime: time.Now().UnixMilli(),
+		TokenId:    TokenId,
+	})
+	if err != nil {
+		return err
+	}
 	w.scheduler.Schedule(req)
 	return nil
 }
@@ -93,11 +106,31 @@ func (w *HotWalletManager) WithdrawToken(service request.BatchWithdrawalTokenSer
 		Amount:       service.Amount,
 		TokenAddress: common.HexToAddress(service.ContractAddress),
 	}
+	var txType int64
+	switch service.ContractAddress {
+	case config.Cfg.Contract.GovernanceTokenAddress:
+		txType = constant.GOVERNANCE_WITHDRAW
+	case config.Cfg.Contract.GameTokenAddress:
+		txType = constant.GAMETOKEN_WITHDRAW
+	case config.Cfg.Contract.UsdcAddress:
+		txType = constant.USDC_WITHDRAW
+	case constant.EmptyAddress:
+		txType = constant.NATIVE_WITHDRAW
+	}
 
-	//err := w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", config.Cfg.Contract.GameVaultAddress, service.ToAddress, service.Amount, 0, service.Cb, constant.GAMETOKEN_WITHDRAW, time.Now().UnixNano())
-	//if err != nil {
-	//	return err
-	//}
+	err := w.gorm.SaveTxCb(model.SpikeTx{
+		OrderId:    service.OrderId,
+		Uuid:       req.Uuid,
+		From:       config.Cfg.Contract.GameVaultAddress,
+		To:         service.ToAddress,
+		Cb:         service.Cb,
+		TxType:     txType,
+		CreateTime: time.Now().UnixMilli(),
+		Amount:     service.Amount,
+	})
+	if err != nil {
+		return err
+	}
 	w.scheduler.Schedule(req)
 	return nil
 }
@@ -115,10 +148,19 @@ func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService
 		TokenAddress: common.HexToAddress(service.ContractAddress),
 	}
 
-	//err := w.gorm.SaveTxCb(service.OrderId, req.Uuid, "", config.Cfg.Contract.GameVaultAddress, service.ToAddress, "", service.TokenID, service.Cb, constant.GAMENFT_TRANSFER, time.Now().UnixNano())
-	//if err != nil {
-	//	return err
-	//}
+	err := w.gorm.SaveTxCb(model.SpikeTx{
+		OrderId:    service.OrderId,
+		Uuid:       req.Uuid,
+		From:       config.Cfg.Contract.GameVaultAddress,
+		To:         service.ToAddress,
+		Cb:         service.Cb,
+		TxType:     constant.GAMENFT_TRANSFER,
+		CreateTime: time.Now().UnixMilli(),
+		TokenId:    service.TokenID,
+	})
+	if err != nil {
+		return err
+	}
 
 	w.scheduler.Schedule(req)
 	return nil

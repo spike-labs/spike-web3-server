@@ -35,15 +35,15 @@ maxOpenConns = 0
 
 [signService]
 taskThreshold = 1000
-schedInterval = 5
+schedInterval = 1
 
 [[signWorkers]]
 walletAddress = "0x550bB66C3050C2e9C5DC2b35aa924485b48B67d0"
-serverUrl = "111"
+serverUrl = "http://chris.dag.fan:3000/tx-api/v1/tx/signature"
 
 [[signWorkers]]
-walletAddress = "0x550bB66C3050C2e9C5DC2b35aa924485b48B67d0"
-serverUrl = "111"
+walletAddress = "0xc778891fed356fa0ba0d41908a2ccfe341debe60"
+serverUrl = "http://chris.dag.fan:3001/tx-api/v1/tx/signature"
 
 [limit]
 nftLimit = 12
