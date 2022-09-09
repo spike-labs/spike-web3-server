@@ -9,6 +9,7 @@ import (
 	chain "spike-frame/chain/abi"
 	"spike-frame/config"
 	"spike-frame/constant"
+	"spike-frame/game"
 	"spike-frame/model"
 	"spike-frame/util"
 	"sync"
@@ -58,6 +59,9 @@ func NewBscListener() (*BscListener, error) {
 	util.Eb.Subscribe(constant.NewBlockTopic, usdcTokenChan)
 	util.Eb.Subscribe(constant.NewBlockTopic, gameTokenChan)
 	util.Eb.Subscribe(constant.NewBlockTopic, gameNftChan)
+
+	cbManger := game.NewCbManager(constant.DbAccessor)
+	go cbManger.Run()
 
 	l := make(map[model.TokenType]Listener)
 	l[model.Bnb] = newBNBListener(bl.ec, errorHandle)

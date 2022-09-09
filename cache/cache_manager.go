@@ -21,14 +21,16 @@ func NewManager(client *redis.Client) *Manager {
 	}
 }
 
-func (m *Manager) Update(event ClearEvent) {
-	log.Infof("clear nft cache , from : %s, to : %s", event.FromAddr, event.ToAddr)
-	util.RmKeyByPrefix(event.FromAddr+constant.NFTTAG, m.RedisClient)
-	util.RmKeyByPrefix(event.ToAddr+constant.NFTTAG, m.RedisClient)
+func (m *Manager) Update(event interface{}) {
+	if e, ok := event.(ClearEvent); ok {
+		log.Infof("clear nft cache , from : %s, to : %s", e.FromAddr, e.ToAddr)
+		util.RmKeyByPrefix(e.FromAddr+constant.NFTTAG, m.RedisClient)
+		util.RmKeyByPrefix(e.ToAddr+constant.NFTTAG, m.RedisClient)
+	}
 }
 
 type Observer interface {
-	Update(event ClearEvent)
+	Update(event interface{})
 }
 
 type Subject interface {
