@@ -56,10 +56,12 @@ func RmKeyByPrefix(prefix string, client *redis.Client) {
 	defer cancel()
 	keys, err := client.Keys(ctx, fmt.Sprintf("%s*", prefix)).Result()
 	if err != nil {
-		log.Error(err)
+		log.Errorf("query redis keys err : %v", err)
 	}
 	if len(keys) == 0 {
 		return
 	}
-	log.Error(client.Del(ctx, keys...).Err())
+	if err := client.Del(ctx, keys...).Err(); err != nil {
+		log.Errorf("delete redis key err : %v", err)
+	}
 }

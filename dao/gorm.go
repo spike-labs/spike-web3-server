@@ -35,6 +35,7 @@ func (g *GormAccessor) QueryGameCb(txHash string) ([]model.SpikeTx, error) {
 		log.Errorf("query game cb err : %v", err)
 		return spikeTxs, err
 	}
+	log.Infof("spikeTxs: %v ", spikeTxs)
 	return spikeTxs, nil
 }
 

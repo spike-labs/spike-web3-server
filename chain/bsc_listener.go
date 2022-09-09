@@ -78,7 +78,7 @@ func (bl *BscListener) Run() {
 		nowBlockNum, err := bl.ec.BlockNumber(context.Background())
 		if err != nil {
 			time.Sleep(500 * time.Millisecond)
-			log.Error("query now bnb_blockNum err :", err)
+			log.Error("query now bsc_blockNum err :", err)
 			continue
 		}
 		cacheBlockNum, isNil, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, constant.RedisClient)
