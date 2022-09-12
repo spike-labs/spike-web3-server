@@ -43,6 +43,14 @@ func (txGroup *TxGroup) InitTxGroup(g *gin.RouterGroup) {
 	}
 }
 
+// @Summary mint nft
+// @Produce json
+// @Param   order_id  formData string true "game orderId"
+// @Param   token_uri formData string true "nft tokenUri"
+// @Param   cb        formData string true "game callBack url address"
+// @Success 200       {object} response.Response
+// @Failure 500       {object} response.Response
+// @Router  /tx-api/v1/hotWallet/mint [post]
 func (txGroup *TxGroup) BatchMint(c *gin.Context) {
 	var service request.BatchMintNFTService
 	err := c.ShouldBind(&service)
@@ -59,6 +67,16 @@ func (txGroup *TxGroup) BatchMint(c *gin.Context) {
 	response.Ok(c)
 }
 
+// @Summary withdraw nft
+// @Produce json
+// @Param   order_id         formData string true "game orderId"
+// @Param   to_address       formData string true "tx toAddress"
+// @Param   token_id         formData int    true "nft token id"
+// @Param   contract_address formData string true "nft contract address"
+// @Param   cb               formData string true "game callBack url address"
+// @Success 200              {object} response.Response
+// @Failure 500              {object} response.Response
+// @Router  /tx-api/v1/hotWallet/withdrawNFT [post]
 func (txGroup *TxGroup) BatchWithdrawNFT(c *gin.Context) {
 	var service request.BatchWithdrawalNFTService
 	err := c.ShouldBind(&service)
@@ -76,6 +94,16 @@ func (txGroup *TxGroup) BatchWithdrawNFT(c *gin.Context) {
 	response.Ok(c)
 }
 
+// @Summary withdraw token
+// @Produce json
+// @Param   order_id         formData string true "game orderId"
+// @Param   to_address       formData string true "tx toAddress"
+// @Param   amount           formData string true "tx token amount"
+// @Param   contract_address formData string true "token contract address(native : 0x0000000000000000000000000000000000000000)"
+// @Param   cb               formData string true "game callBack url address"
+// @Success 200              {object} response.Response
+// @Failure 500              {object} response.Response
+// @Router  /tx-api/v1/hotWallet/withdrawToken [post]
 func (txGroup *TxGroup) BatchWithdrawToken(c *gin.Context) {
 	var service request.BatchWithdrawalTokenService
 	err := c.ShouldBind(&service)
@@ -93,6 +121,17 @@ func (txGroup *TxGroup) BatchWithdrawToken(c *gin.Context) {
 	response.Ok(c)
 }
 
+// @Summary recharge token
+// @Produce json
+// @Param   order_id     formData string true "game orderId"
+// @Param   from_address formData string true "tx fromAddress"
+// @Param   amount       formData string true "tx token amount"
+// @Param   tx_type      formData int    true "tx type"
+// @Param   tx_hash      formData string true "tx hash"
+// @Param   cb           formData string true "game callBack url address"
+// @Success 200          {object} response.Response
+// @Failure 500          {object} response.Response
+// @Router  /tx-api/v1/client/rechargeToken [post]
 func (txGroup *TxGroup) RechargeToken(c *gin.Context) {
 	var service request.RechargeTokenService
 	err := c.ShouldBind(&service)
@@ -110,6 +149,16 @@ func (txGroup *TxGroup) RechargeToken(c *gin.Context) {
 	response.Ok(c)
 }
 
+// @Summary import nft
+// @Produce json
+// @Param   order_id     formData string true "game orderId"
+// @Param   from_address formData string true "tx fromAddress"
+// @Param   token_id     formData int    true "nft token id"
+// @Param   tx_hash      formData string true "tx hash"
+// @Param   cb           formData string true "game callBack url address"
+// @Success 200          {object} response.Response
+// @Failure 500          {object} response.Response
+// @Router  /tx-api/v1/client/importNft [post]
 func (txGroup *TxGroup) ImportNft(c *gin.Context) {
 	var service request.ImportNftService
 	err := c.ShouldBind(&service)
