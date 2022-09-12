@@ -50,10 +50,9 @@ func (g *GormAccessor) UpdateTxNotifyStatus(orderId string, notifyStatus int64) 
 	return g.DB.Model(model.SpikeTx{}).Where("order_id = ?", orderId).Update("notify_status", notifyStatus).Error
 }
 
-func (g *GormAccessor) QueryNotNotifyTx() ([]model.SpikeTx, error) {
+func (g *GormAccessor) QueryNotNotifyTx(notNotifyStatus int) ([]model.SpikeTx, error) {
 	var spikeTxs []model.SpikeTx
-	if err := g.DB.Select("cb", "order_id", "status").Find(&spikeTxs).Error; err != nil {
-		log.Errorf("query not notify tx err : %v", err)
+	if err := g.DB.Select("cb", "order_id", "status").Where("notify_status = ?", notNotifyStatus).Find(&spikeTxs).Error; err != nil {
 		return spikeTxs, err
 	}
 	return spikeTxs, nil

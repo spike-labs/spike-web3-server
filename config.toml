@@ -25,7 +25,7 @@ wsNodeAddress = "wss://ws-nd-513-001-835.p2pify.com/16ead84fd5bde769914b64a03ecd
 rpcNodeAddress = "https://nd-513-001-835.p2pify.com/16ead84fd5bde769914b64a03ecde444"
 
 [mysql]
-path = "192.168.31.244"
+path = "192.168.0.104"
 port = "3309"
 dbName = "spike_frame_server"
 username = "root"

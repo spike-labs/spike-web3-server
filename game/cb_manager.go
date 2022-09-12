@@ -7,19 +7,26 @@ import (
 	logger "github.com/ipfs/go-log"
 	"spike-frame/config"
 	"spike-frame/constant"
-	"spike-frame/dao"
+	"spike-frame/util"
+	"sync"
 	"time"
 )
 
 var log = logger.Logger("game")
 
 const (
-	handleDuration    = time.Minute
-	txTimeoutDuration = 5 * time.Minute
+	HANDLEDURATION      = time.Minute
+	TXTIMEOUTDURATION   = 5 * time.Minute
+	LOCKTIMEOUTDURATION = 5 * time.Minute
+)
+
+var (
+	CbMgr *CbManager
+	once  sync.Once
 )
 
 type CbManager struct {
-	dao.TxTracker
+	TxTracker
 }
 
 type NotifyEvent struct {
@@ -28,54 +35,62 @@ type NotifyEvent struct {
 	PayTime int64
 }
 
-func NewCbManager(tracker dao.TxTracker) *CbManager {
-	return &CbManager{
-		tracker,
-	}
+func NewCbManager(tracker TxTracker) *CbManager {
+	once.Do(func() {
+		CbMgr = &CbManager{tracker}
+	})
+	return CbMgr
 }
 
 func (cm *CbManager) Update(event interface{}) {
-	if e, ok := event.(NotifyEvent); ok {
-		txs, err := cm.QueryGameCb(e.TxHash)
-		if err != nil {
-			log.Errorf("query game cb err : %v", err)
-			return
+	util.Lock(constant.TXCBKEY, constant.TXCBVALUE, LOCKTIMEOUTDURATION, constant.RedisClient)
+	defer util.UnLock(constant.TXCBKEY, constant.RedisClient)
+
+	e, ok := event.(NotifyEvent)
+	if !ok {
+		return
+	}
+
+	txs, err := cm.QueryGameCb(e.TxHash)
+	if err != nil {
+		log.Errorf("query game cb err : %v", err)
+		return
+	}
+	for _, tx := range txs {
+		if tx.NotifyStatus == constant.NOTIFIED {
+			log.Infof("tx %s has been notify", tx.TxHash)
+			continue
 		}
-		for _, tx := range txs {
-			if tx.NotifyStatus == constant.NOTIFIED {
-				log.Infof("tx %s has been notify", tx.TxHash)
-				continue
-			}
-			log.Infof("cb : %s", tx.Cb)
-			err := cm.UpdateTxStatus(tx.TxHash, e.Status, e.PayTime)
-			if err != nil {
-				log.Errorf("update tx :%s status err : %v", tx.TxHash, err)
-				continue
-			}
-			err = executeCb(tx.Cb)
-			if err != nil {
-				log.Errorf("execute cb order id : %s ,err : %v", tx.OrderId, err)
-				continue
-			} else {
-				err = cm.UpdateTxNotifyStatus(tx.OrderId, constant.NOTIFIED)
-				log.Errorf("update tx notify status order id : %s ,err : %v", tx.OrderId, err)
-			}
+		log.Infof("cb : %s", tx.Cb)
+		err := cm.UpdateTxStatus(tx.TxHash, e.Status, e.PayTime)
+		if err != nil {
+			log.Errorf("update tx :%s status err : %v", tx.TxHash, err)
+			continue
+		}
+		err = executeCb(tx.Cb)
+		if err != nil {
+			log.Errorf("execute cb order id : %s ,err : %v", tx.OrderId, err)
+			continue
+		} else {
+			err = cm.UpdateTxNotifyStatus(tx.OrderId, constant.NOTIFIED)
+			log.Errorf("update tx notify status order id : %s ,err : %v", tx.OrderId, err)
 		}
 	}
 }
 
 func (cm *CbManager) Run() {
-	ticker := time.NewTicker(handleDuration)
+	ticker := time.NewTicker(HANDLEDURATION)
 	for {
 		select {
 		case <-ticker.C:
-			txs, err := cm.QueryNotNotifyTx()
+			txs, err := cm.QueryNotNotifyTx(constant.NOTNOTIFIED)
 			if err != nil {
 				log.Errorf("query not notify tx err : %v", err)
 				break
 			}
 			for _, tx := range txs {
-				if time.Now().After(time.UnixMilli(tx.CreateTime).Add(txTimeoutDuration)) {
+				if time.Now().After(time.UnixMilli(tx.CreateTime).Add(TXTIMEOUTDURATION)) {
+					log.Infof("tx cb timeout handle, orderId: %s, txHash : %s, createTime : %d", tx.OrderId, tx.TxHash, tx.CreateTime)
 					client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
 					if err != nil {
 						log.Errorf("eth client dial err : %v", err)
@@ -86,19 +101,22 @@ func (cm *CbManager) Run() {
 						log.Errorf("query tx receipt status err : %v", err)
 						continue
 					}
-					err = cm.UpdateTxStatus(tx.TxHash, int(receipt.Status), tx.PayTime)
+					var txStatus int
+					if receipt.Status == 0 {
+						txStatus = constant.TXFAILED
+					}
+					txStatus = constant.TXSUCCESS
+					err = cm.UpdateTxStatus(tx.TxHash, txStatus, tx.PayTime)
 					if err != nil {
 						log.Errorf("update tx status err : %v", err)
 						continue
 					}
 					err = executeCb(tx.Cb)
-					notifyStatus := constant.NOTIFIED
 					if err != nil {
-						notifyStatus = constant.NOTNOTIFIED
 						log.Errorf("execute cb order id : %s ,err : %v", tx.OrderId, err)
 						continue
 					}
-					err = cm.UpdateTxNotifyStatus(tx.OrderId, int64(notifyStatus))
+					err = cm.UpdateTxNotifyStatus(tx.OrderId, int64(constant.NOTIFIED))
 					if err != nil {
 						log.Errorf("update tx notify status : %s ,err : %v", tx.OrderId, err)
 					}
@@ -109,5 +127,7 @@ func (cm *CbManager) Run() {
 }
 
 func executeCb(url string) error {
+	//todo
+	log.Infof("execute cb : %s", url)
 	return nil
 }
