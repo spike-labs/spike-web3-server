@@ -1,10 +1,10 @@
 package request
 
 type NftListService struct {
-	WalletAddress string `json:"walletAddress" binding:"required"`
-	Type          string `json:"type" binding:"required"`
+	WalletAddress string `form:"wallet_address" json:"wallet_address" binding:"required"`
+	Type          string `form:"type" json:"type" binding:"required"`
 }
 
 type NftTypeService struct {
-	WalletAddress string `json:"walletAddress" binding:"required"`
+	WalletAddress string `form:"wallet_address" json:"wallet_address" binding:"required"`
 }
