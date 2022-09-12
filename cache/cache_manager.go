@@ -35,5 +35,5 @@ type Observer interface {
 
 type Subject interface {
 	AttachObserver(observer Observer)
-	Notify(event ClearEvent)
+	Notify(event interface{})
 }

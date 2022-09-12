@@ -11,5 +11,5 @@ var (
 	RedisClient *redis.Client
 	GormClient  *gorm.DB
 	Viper       *viper.Viper
-	DbAccessor  dao.TxTracker
+	DbAccessor  *dao.GormAccessor
 )

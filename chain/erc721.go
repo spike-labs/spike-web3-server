@@ -12,13 +12,14 @@ import (
 	chain "spike-frame/chain/abi"
 	"spike-frame/config"
 	"spike-frame/constant"
+	"spike-frame/game"
 	"spike-frame/model"
 	"spike-frame/util"
 	"strings"
 	"sync"
 )
 
-func (e *ERC721Listener) Notify(event cache.ClearEvent) {
+func (e *ERC721Listener) Notify(event interface{}) {
 	e.observerLk.Lock()
 	defer e.observerLk.Unlock()
 
@@ -33,10 +34,7 @@ func (e *ERC721Listener) AttachObserver(observer cache.Observer) {
 	e.observerLk.Lock()
 	defer e.observerLk.Unlock()
 
-	o := e.observers.Front()
-	if o == nil {
-		e.observers.PushBack(observer)
-	}
+	e.observers.PushBack(observer)
 }
 
 func (e *ERC721Listener) Accept(fromAddr, toAddr string) (bool, uint64) {
@@ -72,6 +70,7 @@ func newERC721Listener(contractAddr string, tokenType model.TokenType, ec *ethcl
 		observers:      list.New(),
 	}
 	e.AttachObserver(cache.NewManager(constant.RedisClient))
+	e.AttachObserver(game.NewCbManager(constant.DbAccessor))
 	return e
 }
 
@@ -110,41 +109,32 @@ func (el *ERC721Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) err
 		log.Errorf("nft subscribe event log, from: %d,to: %d,err : %+v", fromBlockNum.Int64(), toBlockNum.Int64(), err)
 		return err
 	}
-	for _, l := range sub {
-		switch l.Topics[0].String() {
+	for _, logEvent := range sub {
+		switch logEvent.Topics[0].String() {
 		case util.EventSignHash(chain.TRANSFERTOPIC):
 			msg := ErrMsg{
 				tp:   el.tokenType,
-				from: big.NewInt(int64(l.BlockNumber)),
-				to:   big.NewInt(int64(l.BlockNumber)),
+				from: big.NewInt(int64(logEvent.BlockNumber)),
+				to:   big.NewInt(int64(logEvent.BlockNumber)),
 			}
-			recp, err := el.ec.TransactionReceipt(context.Background(), l.TxHash)
+			recp, err := el.ec.TransactionReceipt(context.Background(), logEvent.TxHash)
 			if err != nil {
 				el.errorHandler <- msg
 				log.Error("nft TransactionReceipt err : ", err)
 				break
 			}
-			block, err := el.ec.BlockByNumber(context.Background(), big.NewInt(int64(l.BlockNumber)))
+			block, err := el.ec.BlockByNumber(context.Background(), big.NewInt(int64(logEvent.BlockNumber)))
 			if err != nil {
 				el.errorHandler <- msg
-				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", l.BlockNumber, err)
+				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", logEvent.BlockNumber, err)
 				break
 			}
 
-			fromAddr := common.HexToAddress(l.Topics[1].Hex()).String()
-			toAddr := common.HexToAddress(l.Topics[2].Hex()).String()
-			_, txType := el.Accept(fromAddr, toAddr)
-			el.Notify(cache.ClearEvent{FromAddr: fromAddr, ToAddr: toAddr})
+			fromAddr := common.HexToAddress(logEvent.Topics[1].Hex()).String()
+			toAddr := common.HexToAddress(logEvent.Topics[2].Hex()).String()
 
-			_ = model.SpikeTx{
-				From:    fromAddr,
-				To:      toAddr,
-				TxType:  int64(txType),
-				TxHash:  l.TxHash.Hex(),
-				Status:  int(recp.Status),
-				PayTime: int64(block.Time() * 1000),
-				TokenId: l.Topics[3].Big().Int64(),
-			}
+			el.Notify(cache.ClearEvent{FromAddr: fromAddr, ToAddr: toAddr})
+			el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		}
 	}
 	return nil

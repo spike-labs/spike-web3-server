@@ -4,14 +4,14 @@ import (
 	"sort"
 	"spike-frame/config"
 	"spike-frame/constant"
-	"spike-frame/dao"
+	"spike-frame/game"
 	"spike-frame/model"
 	"sync"
 	"time"
 )
 
 type hotWalletScheduler struct {
-	gorm dao.TxTracker
+	gorm game.TxTracker
 
 	taskLK  sync.RWMutex
 	workers []Worker

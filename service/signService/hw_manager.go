@@ -8,7 +8,7 @@ import (
 	logger "github.com/ipfs/go-log"
 	"spike-frame/config"
 	"spike-frame/constant"
-	"spike-frame/dao"
+	"spike-frame/game"
 	"spike-frame/model"
 	"spike-frame/request"
 	"spike-frame/util"
@@ -19,7 +19,7 @@ var log = logger.Logger("sign")
 
 type HotWalletManager struct {
 	scheduler *hotWalletScheduler
-	gorm      dao.TxTracker
+	gorm      game.TxTracker
 	rdb       *redis.Client
 }
 

@@ -1,13 +1,16 @@
 package chain
 
 import (
+	"container/list"
 	"context"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
 	"math/big"
+	"spike-frame/cache"
 	"spike-frame/config"
 	"spike-frame/constant"
+	"spike-frame/game"
 	"spike-frame/model"
 	"spike-frame/util"
 	"strings"
@@ -15,7 +18,28 @@ import (
 	"time"
 )
 
-func (t *BNBListener) Accept(fromAddr, toAddr string) (bool, uint64) {
+func (bl *BNBListener) Notify(event interface{}) {
+	bl.observerLk.Lock()
+	defer bl.observerLk.Unlock()
+
+	for o := bl.observers.Front(); o != nil; o = o.Next() {
+		if ov, ok := o.Value.(cache.Observer); ok {
+			ov.Update(event)
+		}
+	}
+}
+
+func (bl *BNBListener) AttachObserver(observer cache.Observer) {
+	bl.observerLk.Lock()
+	defer bl.observerLk.Unlock()
+
+	o := bl.observers.Front()
+	if o == nil {
+		bl.observers.PushBack(observer)
+	}
+}
+
+func (bl *BNBListener) Accept(fromAddr, toAddr string) (bool, uint64) {
 	if strings.ToLower(config.Cfg.Contract.GameVaultAddress) == strings.ToLower(toAddr) {
 		return true, constant.NATIVE_RECHARGE
 	}
@@ -27,19 +51,23 @@ type BNBListener struct {
 	ec           *ethclient.Client
 	chainId      *big.Int
 	errorHandler chan ErrMsg
+	observers    *list.List
+	observerLk   sync.Mutex
 }
 
 func newBNBListener(ec *ethclient.Client, errorHandler chan ErrMsg) *BNBListener {
 	chainId, err := ec.NetworkID(context.Background())
 	if err != nil {
-		log.Error("query network id err : ", err)
+		panic("query network id err")
 		return nil
 	}
-	return &BNBListener{
-		ec,
-		chainId,
-		errorHandler,
+	bl := &BNBListener{
+		ec:           ec,
+		chainId:      chainId,
+		errorHandler: errorHandler,
 	}
+	bl.AttachObserver(game.NewCbManager(constant.DbAccessor))
+	return bl
 }
 
 func (bl *BNBListener) run() {
@@ -136,7 +164,7 @@ func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
 		if tx.Value().Int64() == 0 {
 			continue
 		}
-		accept, txType := bl.Accept(fromAddr, tx.To().Hex())
+		accept, _ := bl.Accept(fromAddr, tx.To().Hex())
 		if !accept {
 			continue
 		}
@@ -145,15 +173,8 @@ func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
 			log.Error("bnb TransactionReceipt err : ", err)
 			return err
 		}
-		_ = model.SpikeTx{
-			From:    fromAddr,
-			To:      tx.To().Hex(),
-			TxType:  int64(txType),
-			TxHash:  tx.Hash().Hex(),
-			Status:  int(recp.Status),
-			PayTime: int64(block.Time() * 1000),
-			Amount:  tx.Value().String(),
-		}
+		bl.Notify(game.NotifyEvent{TxHash: tx.Hash().Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
+		log.Infof("native tx ,from :%s, to : %s,  amount : %s", fromAddr, tx.To().Hex(), tx.Value().String())
 	}
 	return nil
 }

@@ -1,19 +1,44 @@
 package chain
 
 import (
+	"container/list"
 	"context"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"math/big"
+	"spike-frame/cache"
 	chain "spike-frame/chain/abi"
 	"spike-frame/config"
 	"spike-frame/constant"
+	"spike-frame/game"
 	"spike-frame/model"
 	"spike-frame/util"
 	"strings"
+	"sync"
 )
+
+func (e *ERC20Listener) Notify(event interface{}) {
+	e.observerLk.Lock()
+	defer e.observerLk.Unlock()
+
+	for o := e.observers.Front(); o != nil; o = o.Next() {
+		if ov, ok := o.Value.(cache.Observer); ok {
+			ov.Update(event)
+		}
+	}
+}
+
+func (e *ERC20Listener) AttachObserver(observer cache.Observer) {
+	e.observerLk.Lock()
+	defer e.observerLk.Unlock()
+
+	o := e.observers.Front()
+	if o == nil {
+		e.observers.PushBack(observer)
+	}
+}
 
 func (e *ERC20Listener) Accept(fromAddr, toAddr string) (bool, uint64) {
 	if strings.ToLower(config.Cfg.Contract.GameVaultAddress) == strings.ToLower(toAddr) {
@@ -50,17 +75,20 @@ type ERC20Listener struct {
 	ec             *ethclient.Client
 	abi            abi.ABI
 	errorHandler   chan ErrMsg
+	observers      *list.List
+	observerLk     sync.Mutex
 }
 
 func newERC20Listener(contractAddr string, tokenType model.TokenType, ec *ethclient.Client, newBlockNotify util.DataChannel, abi abi.ABI, errorHandler chan ErrMsg) *ERC20Listener {
 	el := &ERC20Listener{
-		contractAddr,
-		tokenType,
-		newBlockNotify,
-		ec,
-		abi,
-		errorHandler,
+		contractAddr:   contractAddr,
+		tokenType:      tokenType,
+		newBlockNotify: newBlockNotify,
+		ec:             ec,
+		abi:            abi,
+		errorHandler:   errorHandler,
 	}
+	el.AttachObserver(game.NewCbManager(constant.DbAccessor))
 	return el
 }
 
@@ -116,7 +144,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 			}
 			fromAddr := common.HexToAddress(logEvent.Topics[1].Hex()).String()
 			toAddr := common.HexToAddress(logEvent.Topics[2].Hex()).String()
-			accept, txType := el.Accept(fromAddr, toAddr)
+			accept, _ := el.Accept(fromAddr, toAddr)
 			if !accept {
 				break
 			}
@@ -132,15 +160,8 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", logEvent.BlockNumber, err)
 				break
 			}
-			_ = model.SpikeTx{
-				From:    fromAddr,
-				To:      toAddr,
-				TxType:  int64(txType),
-				TxHash:  logEvent.TxHash.Hex(),
-				Status:  int(recp.Status),
-				PayTime: int64(block.Time() * 1000),
-				Amount:  input[0].(*big.Int).String(),
-			}
+			log.Infof("erc20 tx ,from :%s, to : %s, type : %s,  amount : %s", fromAddr, toAddr, el.tokenType.String(), input[0].(*big.Int).String())
+			el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		case util.EventSignHash(chain.WITHRAWALTOPIC):
 			msg := ErrMsg{
 				tp:   el.tokenType,
@@ -158,7 +179,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 			}
 			fromAddr := input[1].(common.Address).String()
 			toAddr := input[2].(common.Address).String()
-			accept, txType := el.Accept(fromAddr, toAddr)
+			accept, _ := el.Accept(fromAddr, toAddr)
 			if !accept {
 				break
 			}
@@ -174,15 +195,8 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", logEvent.BlockNumber, err)
 				break
 			}
-			_ = model.SpikeTx{
-				From:    fromAddr,
-				To:      toAddr,
-				TxType:  int64(txType),
-				TxHash:  logEvent.TxHash.Hex(),
-				Status:  int(recp.Status),
-				PayTime: int64(block.Time() * 1000),
-				Amount:  input[3].(*big.Int).String(),
-			}
+			log.Infof("erc20 tx ,from :%s, to : %s, type : %s,  amount : %s", fromAddr, toAddr, el.tokenType.String(), input[0].(*big.Int).String())
+			el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		}
 	}
 	return err
