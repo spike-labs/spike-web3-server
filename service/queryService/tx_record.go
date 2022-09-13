@@ -105,6 +105,7 @@ func (qm *QueryManager) handleNativeTxRecordData(walletAddr string, data respons
 }
 
 func (qm *QueryManager) handleERC20TxRecordData(walletAddr string, contractAddr string, data response.BscResult) (response.BscResult, error) {
+	log.Infof("query er20 tx record result : %+v", data)
 	if len(data.Result) == 0 {
 		data.Result = make([]response.TxResult, 0)
 		cacheData, _ := json.Marshal(data)

@@ -5,6 +5,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/game"
+	"spike-frame/global"
 	"spike-frame/model"
 	"sync"
 	"time"
@@ -27,7 +28,7 @@ type hotWalletScheduler struct {
 
 func newScheduler() *hotWalletScheduler {
 	return &hotWalletScheduler{
-		gorm:    constant.DbAccessor,
+		gorm:    global.DbAccessor,
 		workers: make([]Worker, 0),
 
 		mintSched: make(chan *model.BatchMintReq),

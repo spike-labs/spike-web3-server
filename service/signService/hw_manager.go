@@ -9,6 +9,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/game"
+	"spike-frame/global"
 	"spike-frame/model"
 	"spike-frame/request"
 	"spike-frame/util"
@@ -26,8 +27,8 @@ type HotWalletManager struct {
 func NewHWManager() (*HotWalletManager, error) {
 	m := &HotWalletManager{
 		scheduler: newScheduler(),
-		gorm:      constant.DbAccessor,
-		rdb:       constant.RedisClient,
+		gorm:      global.DbAccessor,
+		rdb:       global.RedisClient,
 	}
 
 	_, isNil, err := util.GetIntFromRedis(constant.TOKENID, m.rdb)
@@ -78,14 +79,14 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error 
 	}
 
 	err = w.gorm.SaveTxCb(model.SpikeTx{
-		OrderId:    service.OrderId,
-		Uuid:       req.Uuid,
-		From:       constant.EmptyAddress,
-		To:         config.Cfg.Contract.GameVaultAddress,
-		Cb:         service.Cb,
-		TxType:     constant.GAMENFT_TRANSFER,
-		CreateTime: time.Now().UnixMilli(),
-		TokenId:    TokenId,
+		OrderId:         service.OrderId,
+		Uuid:            req.Uuid,
+		From:            constant.EmptyAddress,
+		To:              config.Cfg.Contract.GameVaultAddress,
+		Cb:              service.Cb,
+		ContractAddress: config.Cfg.Contract.GameNftAddress,
+		CreateTime:      time.Now().UnixMilli(),
+		TokenId:         TokenId,
 	})
 	if err != nil {
 		return err
@@ -106,27 +107,16 @@ func (w *HotWalletManager) WithdrawToken(service request.BatchWithdrawalTokenSer
 		Amount:       service.Amount,
 		TokenAddress: common.HexToAddress(service.ContractAddress),
 	}
-	var txType int64
-	switch service.ContractAddress {
-	case config.Cfg.Contract.GovernanceTokenAddress:
-		txType = constant.GOVERNANCE_WITHDRAW
-	case config.Cfg.Contract.GameTokenAddress:
-		txType = constant.GAMETOKEN_WITHDRAW
-	case config.Cfg.Contract.UsdcAddress:
-		txType = constant.USDC_WITHDRAW
-	case constant.EmptyAddress:
-		txType = constant.NATIVE_WITHDRAW
-	}
 
 	err := w.gorm.SaveTxCb(model.SpikeTx{
-		OrderId:    service.OrderId,
-		Uuid:       req.Uuid,
-		From:       config.Cfg.Contract.GameVaultAddress,
-		To:         service.ToAddress,
-		Cb:         service.Cb,
-		TxType:     txType,
-		CreateTime: time.Now().UnixMilli(),
-		Amount:     service.Amount,
+		OrderId:         service.OrderId,
+		Uuid:            req.Uuid,
+		From:            config.Cfg.Contract.GameVaultAddress,
+		To:              service.ToAddress,
+		Cb:              service.Cb,
+		ContractAddress: service.ContractAddress,
+		CreateTime:      time.Now().UnixMilli(),
+		Amount:          service.Amount,
 	})
 	if err != nil {
 		return err
@@ -149,14 +139,14 @@ func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService
 	}
 
 	err := w.gorm.SaveTxCb(model.SpikeTx{
-		OrderId:    service.OrderId,
-		Uuid:       req.Uuid,
-		From:       config.Cfg.Contract.GameVaultAddress,
-		To:         service.ToAddress,
-		Cb:         service.Cb,
-		TxType:     constant.GAMENFT_TRANSFER,
-		CreateTime: time.Now().UnixMilli(),
-		TokenId:    service.TokenID,
+		OrderId:         service.OrderId,
+		Uuid:            req.Uuid,
+		From:            config.Cfg.Contract.GameVaultAddress,
+		To:              service.ToAddress,
+		Cb:              service.Cb,
+		ContractAddress: service.ContractAddress,
+		CreateTime:      time.Now().UnixMilli(),
+		TokenId:         service.TokenID,
 	})
 	if err != nil {
 		return err

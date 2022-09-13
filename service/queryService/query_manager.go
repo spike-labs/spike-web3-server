@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"spike-frame/config"
 	"spike-frame/constant"
+	"spike-frame/global"
 	"spike-frame/model"
 	"spike-frame/response"
 	"spike-frame/util"
@@ -41,7 +42,7 @@ func NewQueryManager() *QueryManager {
 	return &QueryManager{
 		network:     network,
 		sched:       NewScheduler(),
-		redisClient: constant.RedisClient,
+		redisClient: global.RedisClient,
 	}
 }
 

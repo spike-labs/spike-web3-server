@@ -7,6 +7,7 @@ import (
 	logger "github.com/ipfs/go-log"
 	"spike-frame/config"
 	"spike-frame/constant"
+	"spike-frame/global"
 	"spike-frame/util"
 	"sync"
 	"time"
@@ -43,8 +44,8 @@ func NewCbManager(tracker TxTracker) *CbManager {
 }
 
 func (cm *CbManager) Update(event interface{}) {
-	util.Lock(constant.TXCBKEY, constant.TXCBVALUE, LOCKTIMEOUTDURATION, constant.RedisClient)
-	defer util.UnLock(constant.TXCBKEY, constant.RedisClient)
+	util.Lock(constant.TXCBKEY, constant.TXCBVALUE, LOCKTIMEOUTDURATION, global.RedisClient)
+	defer util.UnLock(constant.TXCBKEY, global.RedisClient)
 
 	e, ok := event.(NotifyEvent)
 	if !ok {

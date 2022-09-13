@@ -47,7 +47,7 @@ func (api *QueryGroup) InitQueryGroup(g *gin.RouterGroup) {
 	}
 }
 
-// @Summary query singe nft list
+// @Summary query single nft list
 // @Produce json
 // @Param   wallet_address formData string true "wallet bsc address"
 // @Param   type           formData string true "nft type"
@@ -161,7 +161,7 @@ func (api *QueryGroup) QueryNativeTxRecord(c *gin.Context) {
 	}
 }
 
-// @Summary query wallet native tx list(7 days)
+// @Summary query wallet ERC20 tx list(7 days)
 // @Produce json
 // @Param   wallet_address   formData string true "wallet bsc address"
 // @Param   contract_address formData string true "erc20 contract address"
