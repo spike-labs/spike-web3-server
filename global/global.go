@@ -1,4 +1,4 @@
-package constant
+package global
 
 import (
 	"github.com/go-redis/redis/v8"

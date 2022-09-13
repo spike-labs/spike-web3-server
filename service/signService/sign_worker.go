@@ -10,6 +10,7 @@ import (
 	chain "spike-frame/chain/abi"
 	"spike-frame/config"
 	"spike-frame/constant"
+	"spike-frame/global"
 	"spike-frame/model"
 	"spike-frame/request"
 	"spike-frame/response"
@@ -91,7 +92,7 @@ func NewAllRoundWorker() (*AllRoundWorker, error) {
 	worker := &AllRoundWorker{
 		BscClient:  bscClient,
 		httpClient: resty.New(),
-		rdb:        constant.RedisClient,
+		rdb:        global.RedisClient,
 		info:       info,
 		nftABI:     nftAbi,
 		vaultABI:   vaultAbi,

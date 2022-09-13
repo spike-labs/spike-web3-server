@@ -13,6 +13,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/game"
+	"spike-frame/global"
 	"spike-frame/model"
 	"spike-frame/util"
 	"strings"
@@ -87,8 +88,9 @@ func newERC20Listener(contractAddr string, tokenType model.TokenType, ec *ethcli
 		ec:             ec,
 		abi:            abi,
 		errorHandler:   errorHandler,
+		observers:      list.New(),
 	}
-	el.AttachObserver(game.NewCbManager(constant.DbAccessor))
+	el.AttachObserver(game.NewCbManager(global.DbAccessor))
 	return el
 }
 

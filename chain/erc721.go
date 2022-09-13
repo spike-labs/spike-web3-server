@@ -13,6 +13,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/game"
+	"spike-frame/global"
 	"spike-frame/model"
 	"spike-frame/util"
 	"strings"
@@ -69,8 +70,8 @@ func newERC721Listener(contractAddr string, tokenType model.TokenType, ec *ethcl
 		errorHandler:   errorHandler,
 		observers:      list.New(),
 	}
-	e.AttachObserver(cache.NewManager(constant.RedisClient))
-	e.AttachObserver(game.NewCbManager(constant.DbAccessor))
+	e.AttachObserver(cache.NewManager(global.RedisClient))
+	e.AttachObserver(game.NewCbManager(global.DbAccessor))
 	return e
 }
 

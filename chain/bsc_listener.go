@@ -10,6 +10,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/game"
+	"spike-frame/global"
 	"spike-frame/model"
 	"spike-frame/util"
 	"sync"
@@ -60,7 +61,7 @@ func NewBscListener() (*BscListener, error) {
 	util.Eb.Subscribe(constant.NewBlockTopic, gameTokenChan)
 	util.Eb.Subscribe(constant.NewBlockTopic, gameNftChan)
 
-	cbManger := game.NewCbManager(constant.DbAccessor)
+	cbManger := game.NewCbManager(global.DbAccessor)
 	go cbManger.Run()
 
 	l := make(map[model.TokenType]Listener)
@@ -85,14 +86,14 @@ func (bl *BscListener) Run() {
 			log.Error("query now bsc_blockNum err :", err)
 			continue
 		}
-		cacheBlockNum, isNil, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, constant.RedisClient)
+		cacheBlockNum, isNil, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, global.RedisClient)
 		if err != nil {
 			log.Errorf("query redis err : %v", err)
 			return
 		}
 		if isNil {
 			log.Infof("blockNum is not exist")
-			util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, constant.RedisClient)
+			util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, global.RedisClient)
 			break
 		}
 
@@ -109,7 +110,7 @@ func (bl *BscListener) Run() {
 			}(listener)
 		}
 		wg.Wait()
-		util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, constant.RedisClient)
+		util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, global.RedisClient)
 	}
 
 	for _, listener := range bl.l {

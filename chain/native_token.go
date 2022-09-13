@@ -11,6 +11,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/game"
+	"spike-frame/global"
 	"spike-frame/model"
 	"spike-frame/util"
 	"strings"
@@ -65,8 +66,9 @@ func newBNBListener(ec *ethclient.Client, errorHandler chan ErrMsg) *BNBListener
 		ec:           ec,
 		chainId:      chainId,
 		errorHandler: errorHandler,
+		observers:    list.New(),
 	}
-	bl.AttachObserver(game.NewCbManager(constant.DbAccessor))
+	bl.AttachObserver(game.NewCbManager(global.DbAccessor))
 	return bl
 }
 
@@ -90,7 +92,7 @@ func (bl *BNBListener) NewBlockFilter() error {
 			log.Error("new block subscribe err : ", err)
 		case header := <-newBlockChan:
 			height := new(big.Int).Sub(header.Number, big.NewInt(constant.BlockConfirmHeight))
-			cacheHeight, _, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, constant.RedisClient)
+			cacheHeight, _, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, global.RedisClient)
 
 			if height.Int64()-1 > cacheHeight {
 				for i := cacheHeight + 1; i < height.Int64(); i++ {
@@ -114,7 +116,7 @@ func (bl *BNBListener) NewBlockFilter() error {
 					to:   height,
 				}
 			}
-			util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, height.Int64(), 0, constant.RedisClient)
+			util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, height.Int64(), 0, global.RedisClient)
 			log.Infof("bnb listen new block %d finished", height)
 		}
 	}
