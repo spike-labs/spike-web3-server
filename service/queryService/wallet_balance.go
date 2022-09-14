@@ -26,56 +26,31 @@ func (service *BalanceService) QueryWalletService(address string) ([]response.Ba
 		return balanceList, chainNodeError
 	}
 	addr := common.HexToAddress(address)
+	contractAddrList := config.Cfg.Contract.ERC20ContractAddress
 	var wg sync.WaitGroup
-	wg.Add(4)
-	go func() {
-		defer wg.Done()
-		erc20Contract, err := contract.NewErc20Contract(common.HexToAddress(config.Cfg.Contract.GovernanceTokenAddress), client)
-		if err != nil {
-			return
-		}
-		governanceTokenBalance, err := erc20Contract.BalanceOf(nil, addr)
-		if err != nil {
-			return
-		}
-		balanceList = append(balanceList, response.BalanceShow{
-			Symbol:  "SKK",
-			Balance: util.ParseBalance(governanceTokenBalance),
-		})
-	}()
-
-	go func() {
-		defer wg.Done()
-		erc20Contract, err := contract.NewErc20Contract(common.HexToAddress(config.Cfg.Contract.GameTokenAddress), client)
-		if err != nil {
-			return
-		}
-		gameTokenBalance, err := erc20Contract.BalanceOf(nil, addr)
-		if err != nil {
-			return
-		}
-		balanceList = append(balanceList, response.BalanceShow{
-			Symbol:  "SKS",
-			Balance: util.ParseBalance(gameTokenBalance),
-		})
-	}()
-
-	go func() {
-		defer wg.Done()
-		erc20Contract, err := contract.NewErc20Contract(common.HexToAddress(config.Cfg.Contract.UsdcAddress), client)
-		if err != nil {
-			return
-		}
-		usdcBalance, err := erc20Contract.BalanceOf(nil, addr)
-		if err != nil {
-			return
-		}
-		balanceList = append(balanceList, response.BalanceShow{
-			Symbol:  "USDC",
-			Balance: util.ParseBalance(usdcBalance),
-		})
-	}()
-
+	balanceShowLength := len(contractAddrList) + 1
+	wg.Add(balanceShowLength)
+	for _, contractAddress := range contractAddrList {
+		go func(contractAddr string) {
+			defer wg.Done()
+			erc20Contract, err := contract.NewErc20Contract(common.HexToAddress(contractAddr), client)
+			if err != nil {
+				return
+			}
+			balance, err := erc20Contract.BalanceOf(nil, addr)
+			if err != nil {
+				return
+			}
+			symbol, err := erc20Contract.Symbol(nil)
+			if err != nil {
+				return
+			}
+			balanceList = append(balanceList, response.BalanceShow{
+				Symbol:  symbol,
+				Balance: util.ParseBalance(balance),
+			})
+		}(contractAddress)
+	}
 	go func() {
 		defer wg.Done()
 		bnbBalance, err := client.BalanceAt(context.Background(), addr, nil)
@@ -88,7 +63,7 @@ func (service *BalanceService) QueryWalletService(address string) ([]response.Ba
 		})
 	}()
 	wg.Wait()
-	if len(balanceList) != 4 {
+	if len(balanceList) != balanceShowLength {
 		return balanceList, chainNodeError
 	}
 	log.Infof("wallet : %s  balance : %v", address, balanceList)

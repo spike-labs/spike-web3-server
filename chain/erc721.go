@@ -10,13 +10,9 @@ import (
 	"math/big"
 	"spike-frame/cache"
 	chain "spike-frame/chain/abi"
-	"spike-frame/config"
-	"spike-frame/constant"
 	"spike-frame/game"
 	"spike-frame/global"
-	"spike-frame/model"
 	"spike-frame/util"
-	"strings"
 	"sync"
 )
 
@@ -38,20 +34,12 @@ func (e *ERC721Listener) AttachObserver(observer cache.Observer) {
 	e.observers.PushBack(observer)
 }
 
-func (e *ERC721Listener) Accept(fromAddr, toAddr string) (bool, uint64) {
-	if strings.ToLower(constant.EmptyAddress) == strings.ToLower(fromAddr) {
-		return true, constant.GAMENFT_TRANSFER
-	}
-
-	if strings.ToLower(config.Cfg.Contract.GameVaultAddress) == strings.ToLower(toAddr) {
-		return true, constant.GAMENFT_IMPORT
-	}
-	return true, constant.GAMENFT_TRANSFER
+func (e *ERC721Listener) Accept(fromAddr, toAddr string) bool {
+	return true
 }
 
 type ERC721Listener struct {
 	contractAddr   string
-	tokenType      model.TokenType
 	newBlockNotify util.DataChannel
 	ec             *ethclient.Client
 	abi            abi.ABI
@@ -60,10 +48,9 @@ type ERC721Listener struct {
 	observerLk     sync.Mutex
 }
 
-func newERC721Listener(contractAddr string, tokenType model.TokenType, ec *ethclient.Client, newBlockNotify util.DataChannel, abi abi.ABI, errorHandler chan ErrMsg) *ERC721Listener {
+func newERC721Listener(contractAddr string, ec *ethclient.Client, newBlockNotify util.DataChannel, abi abi.ABI, errorHandler chan ErrMsg) *ERC721Listener {
 	e := &ERC721Listener{
 		contractAddr:   contractAddr,
-		tokenType:      tokenType,
 		newBlockNotify: newBlockNotify,
 		ec:             ec,
 		abi:            abi,
@@ -103,9 +90,9 @@ func (el *ERC721Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) err
 	sub, err := ethClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		el.errorHandler <- ErrMsg{
-			tp:   el.tokenType,
-			from: fromBlockNum,
-			to:   toBlockNum,
+			contractAddr: el.contractAddr,
+			from:         fromBlockNum,
+			to:           toBlockNum,
 		}
 		log.Errorf("nft subscribe event log, from: %d,to: %d,err : %+v", fromBlockNum.Int64(), toBlockNum.Int64(), err)
 		return err
@@ -114,9 +101,9 @@ func (el *ERC721Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) err
 		switch logEvent.Topics[0].String() {
 		case util.EventSignHash(chain.TRANSFERTOPIC):
 			msg := ErrMsg{
-				tp:   el.tokenType,
-				from: big.NewInt(int64(logEvent.BlockNumber)),
-				to:   big.NewInt(int64(logEvent.BlockNumber)),
+				contractAddr: el.contractAddr,
+				from:         big.NewInt(int64(logEvent.BlockNumber)),
+				to:           big.NewInt(int64(logEvent.BlockNumber)),
 			}
 			recp, err := el.ec.TransactionReceipt(context.Background(), logEvent.TxHash)
 			if err != nil {

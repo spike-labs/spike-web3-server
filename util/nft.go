@@ -16,12 +16,12 @@ import (
 	"time"
 )
 
-func ConvertNftResult(res []response.NftResult) []response.NftResult {
+func ConvertNftResult(gameNftAddress string, res []response.NftResult) []response.NftResult {
 	client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
 	if err != nil {
 		return res
 	}
-	gameNft, err := contract.NewErc721Contract(common.HexToAddress(config.Cfg.Contract.GameNftAddress), client)
+	gameNft, err := contract.NewErc721Contract(common.HexToAddress(gameNftAddress), client)
 	if err != nil {
 		log.Error("new auNft err : ", err)
 		return res

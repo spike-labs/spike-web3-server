@@ -3,6 +3,7 @@ package main
 import (
 	logger "github.com/ipfs/go-log"
 	"spike-frame/cache"
+	"spike-frame/chain"
 	"spike-frame/config"
 	"spike-frame/dao"
 	"spike-frame/global"
@@ -15,6 +16,6 @@ func main() {
 	global.GormClient = initialize.GormMysql()
 	global.RedisClient = cache.ConnectRedis()
 	global.DbAccessor = dao.NewGormAccessor(global.GormClient)
-	//	chain.NewBscListener()
+	chain.NewBscListener()
 	initialize.RunServer()
 }

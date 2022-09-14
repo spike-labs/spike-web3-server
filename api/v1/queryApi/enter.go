@@ -49,29 +49,25 @@ func (api *QueryGroup) InitQueryGroup(g *gin.RouterGroup) {
 
 // @Summary query single nft list
 // @Produce json
-// @Param   wallet_address formData string true "wallet bsc address"
-// @Param   type           formData string true "nft type"
+// @Param   wallet_address   formData string true "wallet bsc address"
+// @Param   contract_address formData string true "nft contract address"
+// @Param   type             formData string true "nft type"
 // @Success 200              {object} response.Response
 // @Failure 500              {object} response.Response
 // @Router  /query-api/v1/nft/list [post]
 func (api *QueryGroup) QueryNftList(c *gin.Context) {
 	var service request.NftListService
-
 	if err := c.ShouldBind(&service); err == nil {
-		if service.WalletAddress == "" || service.Type == "" {
-			response.FailWithMessage("request params error", c)
-		} else {
-			log.Infof("query wallet %s nft list", service.WalletAddress)
-			ctx := context.Background()
-			cctx, cancel := context.WithTimeout(ctx, queryNftListTimeout)
-			result, err := api.manager.QueryNftList(cctx, service.WalletAddress, service.Type)
-			cancel()
-			if err != nil {
-				response.FailWithMessage(err.Error(), c)
-				return
-			}
-			response.OkWithData(result, c)
+		log.Infof("query wallet %s contractAddr %s nft list", service.WalletAddress, service.ContractAddress)
+		ctx := context.Background()
+		cctx, cancel := context.WithTimeout(ctx, queryNftListTimeout)
+		result, err := api.manager.QueryNftList(cctx, service.ContractAddress, service.WalletAddress, service.Type)
+		cancel()
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
 		}
+		response.OkWithData(result, c)
 	} else {
 		response.FailWithMessage("request params error", c)
 	}
@@ -79,28 +75,26 @@ func (api *QueryGroup) QueryNftList(c *gin.Context) {
 
 // @Summary query all nft type
 // @Produce json
-// @Param   wallet_address formData string true "wallet bsc address"
-// @Success 200            {object} response.Response
-// @Failure 500            {object} response.Response
+// @Param   wallet_address   formData string true "wallet bsc address"
+// @Param   contract_address formData string true "nft contract address"
+// @Success 200              {object} response.Response
+// @Failure 500              {object} response.Response
 // @Router  /query-api/v1/nft/type [post]
 func (api *QueryGroup) QueryNftType(c *gin.Context) {
 	var service request.NftTypeService
 
 	if err := c.ShouldBind(&service); err == nil {
-		if service.WalletAddress == "" {
-			response.FailWithMessage("request params error", c)
-		} else {
-			log.Infof("query wallet %s nft type", service.WalletAddress)
-			ctx := context.Background()
-			cctx, cancel := context.WithTimeout(ctx, queryNftListTimeout)
-			result, err := api.manager.QueryNftType(cctx, service.WalletAddress)
-			cancel()
-			if err != nil {
-				response.FailWithMessage(err.Error(), c)
-				return
-			}
-			response.OkWithData(result, c)
+		log.Infof("query wallet %s contractAddr %s nft type", service.WalletAddress, service.ContractAddress)
+		ctx := context.Background()
+		cctx, cancel := context.WithTimeout(ctx, queryNftListTimeout)
+		result, err := api.manager.QueryNftType(cctx, service.ContractAddress, service.WalletAddress)
+		cancel()
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
 		}
+		response.OkWithData(result, c)
+
 	} else {
 		response.FailWithMessage("request params error", c)
 	}
@@ -109,8 +103,8 @@ func (api *QueryGroup) QueryNftType(c *gin.Context) {
 // @Summary query wallet balance
 // @Produce json
 // @Param   wallet_address formData string true "wallet bsc address"
-// @Success 200            {object} response.Response
-// @Failure 500            {object} response.Response
+// @Success 200              {object} response.Response
+// @Failure 500              {object} response.Response
 // @Router  /query-api/v1/balance [post]
 func (api *QueryGroup) QueryBalance(c *gin.Context) {
 	var service request.BalanceService

@@ -11,7 +11,6 @@ import (
 	"spike-frame/constant"
 	"spike-frame/game"
 	"spike-frame/global"
-	"spike-frame/model"
 	"spike-frame/util"
 	"sync"
 	"time"
@@ -24,16 +23,16 @@ const (
 )
 
 type ErrMsg struct {
-	tp   model.TokenType
-	from *big.Int
-	to   *big.Int
+	contractAddr string
+	from         *big.Int
+	to           *big.Int
 }
 
 type BscListener struct {
 	network     string
 	ec          *ethclient.Client
 	rc          *redis.Client
-	l           map[model.TokenType]Listener
+	l           map[string]Listener
 	errorHandle chan ErrMsg
 }
 
@@ -50,27 +49,26 @@ func NewBscListener() (*BscListener, error) {
 	bl.errorHandle = errorHandle
 	bl.ec = client
 
-	gameVaultChan := make(util.DataChannel, 10)
-	governanceTokenChan := make(util.DataChannel, 10)
-	usdcTokenChan := make(util.DataChannel, 10)
-	gameTokenChan := make(util.DataChannel, 10)
-	gameNftChan := make(util.DataChannel, 10)
-	util.Eb.Subscribe(constant.NewBlockTopic, gameVaultChan)
-	util.Eb.Subscribe(constant.NewBlockTopic, governanceTokenChan)
-	util.Eb.Subscribe(constant.NewBlockTopic, usdcTokenChan)
-	util.Eb.Subscribe(constant.NewBlockTopic, gameTokenChan)
-	util.Eb.Subscribe(constant.NewBlockTopic, gameNftChan)
-
 	cbManger := game.NewCbManager(global.DbAccessor)
 	go cbManger.Run()
 
-	l := make(map[model.TokenType]Listener)
-	l[model.Bnb] = newBNBListener(bl.ec, errorHandle)
-	l[model.Usdc] = newERC20Listener(config.Cfg.Contract.UsdcAddress, model.Usdc, bl.ec, usdcTokenChan, util.GetABI(chain.USDCContractABI), errorHandle)
-	l[model.GovernanceToken] = newERC20Listener(config.Cfg.Contract.GovernanceTokenAddress, model.GovernanceToken, bl.ec, governanceTokenChan, util.GetABI(chain.GovernanceTokenABI), errorHandle)
-	l[model.GameToken] = newERC20Listener(config.Cfg.Contract.GameTokenAddress, model.GameToken, bl.ec, gameTokenChan, util.GetABI(chain.GameTokenABI), errorHandle)
-	l[model.GameVault] = newERC20Listener(config.Cfg.Contract.GameVaultAddress, model.GameVault, bl.ec, gameVaultChan, util.GetABI(chain.GameVaultABI), errorHandle)
-	l[model.GameNft] = newERC721Listener(config.Cfg.Contract.GameNftAddress, model.GameNft, bl.ec, gameNftChan, util.GetABI(chain.GameNftABI), errorHandle)
+	l := make(map[string]Listener)
+	l[constant.EmptyAddress] = newBNBListener(bl.ec, errorHandle)
+	gameVaultChan := make(util.DataChannel, 10)
+	l[config.Cfg.Contract.GameVaultAddress] = newERC20Listener(config.Cfg.Contract.GameVaultAddress, bl.ec, gameVaultChan, util.GetABI(chain.GameVaultABI), errorHandle)
+	util.Eb.Subscribe(constant.NewBlockTopic, gameVaultChan)
+
+	for _, contractAddr := range config.Cfg.Contract.ERC20ContractAddress {
+		erc20TokenChan := make(util.DataChannel, 10)
+		l[contractAddr] = newERC20Listener(contractAddr, bl.ec, erc20TokenChan, util.GetABI(chain.ERC20ContractABI), errorHandle)
+		util.Eb.Subscribe(constant.NewBlockTopic, erc20TokenChan)
+	}
+
+	for _, contractAddr := range config.Cfg.Contract.NftContractAddress {
+		erc721TokenChan := make(util.DataChannel, 10)
+		l[contractAddr] = newERC721Listener(contractAddr, bl.ec, erc721TokenChan, util.GetABI(chain.ERC721ContractABI), errorHandle)
+		util.Eb.Subscribe(constant.NewBlockTopic, erc721TokenChan)
+	}
 	bl.l = l
 	go bl.Run()
 	return bl, nil
@@ -124,10 +122,10 @@ func (bl *BscListener) handleError() {
 	for {
 		select {
 		case msg := <-bl.errorHandle:
-			log.Infof("handle err ,type : %s, from : %d, to : %d", msg.tp.String(), msg.from.Int64(), msg.to.Int64())
-			if _, ok := bl.l[msg.tp]; ok {
+			log.Infof("handle err ,type : %s, from : %d, to : %d", msg.contractAddr, msg.from.Int64(), msg.to.Int64())
+			if _, ok := bl.l[msg.contractAddr]; ok {
 				time.Sleep(200 * time.Millisecond)
-				bl.l[msg.tp].handlePastBlock(msg.from, msg.to)
+				bl.l[msg.contractAddr].handlePastBlock(msg.from, msg.to)
 			}
 		}
 	}

@@ -87,7 +87,7 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error 
 		From:            constant.EmptyAddress,
 		To:              config.Cfg.Contract.GameVaultAddress,
 		Cb:              service.Cb,
-		ContractAddress: config.Cfg.Contract.GameNftAddress,
+		ContractAddress: config.Cfg.Contract.NftContractAddress[0],
 		CreateTime:      time.Now().UnixMilli(),
 		TokenId:         TokenId,
 	})

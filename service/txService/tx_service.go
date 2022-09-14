@@ -20,7 +20,7 @@ func (t *TxService) RechargeToken(service request.RechargeTokenService) error {
 		ContractAddress: service.ContractAddress,
 		TxHash:          service.TxHash,
 		Cb:              service.Cb,
-		CreateTime:      int64(time.Now().Nanosecond()),
+		CreateTime:      time.Now().UnixMilli(),
 	}
 	return global.DbAccessor.SaveTxCb(tx)
 }
@@ -33,7 +33,7 @@ func (t *TxService) ImportNft(service request.ImportNftService) error {
 		ContractAddress: service.ContractAddress,
 		TxHash:          service.TxHash,
 		Cb:              service.Cb,
-		CreateTime:      int64(time.Now().Nanosecond()),
+		CreateTime:      time.Now().UnixMilli(),
 	}
 	return global.DbAccessor.SaveTxCb(tx)
 }

@@ -70,7 +70,7 @@ func NewAllRoundWorker(workers config.SignWorker) (*AllRoundWorker, error) {
 		return nil, err
 	}
 
-	nftAbi, err := abi.JSON(strings.NewReader(chain.GameNftABI))
+	nftAbi, err := abi.JSON(strings.NewReader(chain.ERC721ContractABI))
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (w *AllRoundWorker) BatchMint(reqs []model.BatchMintReq) ([]string, string,
 
 	spikeTx := &util.SpikeTx{
 		Data:      inputData,
-		To:        config.Cfg.Contract.GameNftAddress,
+		To:        config.Cfg.Contract.NftContractAddress[0],
 		BscClient: w.BscClient,
 		From:      common.HexToAddress(w.info.walletAddress),
 		Nonce:     CNonce,

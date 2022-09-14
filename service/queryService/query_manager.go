@@ -46,19 +46,19 @@ func NewQueryManager() *QueryManager {
 	}
 }
 
-func (qm *QueryManager) QueryNftType(ctx context.Context, walletAddr string) ([]response.NftType, error) {
-	value, isNil, err := util.GetStringFromRedis(walletAddr+constant.NFTTYPESUFFIX, qm.redisClient)
+func (qm *QueryManager) QueryNftType(ctx context.Context, gameContractAddr, walletAddr string) ([]response.NftType, error) {
+	value, isNil, err := util.GetStringFromRedis(walletAddr+gameContractAddr+constant.NFTTYPESUFFIX, qm.redisClient)
 	if err != nil {
 		return []response.NftType{}, err
 	}
 	if isNil {
-		err = qm.queryNft(ctx, walletAddr)
+		err = qm.queryNft(ctx, gameContractAddr, walletAddr)
 		if err != nil {
 			return []response.NftType{}, err
 		}
 	}
 
-	value, isNil, err = util.GetStringFromRedis(walletAddr+constant.NFTTYPESUFFIX, qm.redisClient)
+	value, isNil, err = util.GetStringFromRedis(walletAddr+gameContractAddr+constant.NFTTYPESUFFIX, qm.redisClient)
 	if err != nil {
 		return []response.NftType{}, err
 	}
@@ -70,42 +70,43 @@ func (qm *QueryManager) QueryNftType(ctx context.Context, walletAddr string) ([]
 	return nftRes, nil
 }
 
-func (qm *QueryManager) QueryNftList(ctx context.Context, walletAddr string, assetType string) ([]response.NftResult, error) {
+func (qm *QueryManager) QueryNftList(ctx context.Context, gameContractAddr, walletAddr, assetType string) ([]model.CacheData, error) {
 
-	value, isNil, err := util.GetStringFromRedis(walletAddr+constant.NFTLISTSUFFIX+assetType, qm.redisClient)
+	value, isNil, err := util.GetStringFromRedis(walletAddr+gameContractAddr+constant.NFTLISTSUFFIX+assetType, qm.redisClient)
 	if err != nil {
-		return []response.NftResult{}, err
+		return []model.CacheData{}, err
 	}
 	if isNil {
-		err = qm.queryNft(ctx, walletAddr)
+		err = qm.queryNft(ctx, gameContractAddr, walletAddr)
 		if err != nil {
-			return []response.NftResult{}, err
+			return []model.CacheData{}, err
 		}
 	}
 
-	value, isNil, err = util.GetStringFromRedis(walletAddr+constant.NFTLISTSUFFIX+assetType, qm.redisClient)
+	value, isNil, err = util.GetStringFromRedis(walletAddr+gameContractAddr+constant.NFTLISTSUFFIX+assetType, qm.redisClient)
 	if err != nil {
-		return []response.NftResult{}, err
+		return []model.CacheData{}, err
 	}
-	var nftRes []response.NftResult
+	var nftRes []model.CacheData
 	err = json.Unmarshal([]byte(value), &nftRes)
 	if err != nil {
-		return []response.NftResult{}, err
+		return []model.CacheData{}, err
 	}
 	return nftRes, nil
 }
 
-func (qm *QueryManager) queryNft(ctx context.Context, walletAddr string) error {
+func (qm *QueryManager) queryNft(ctx context.Context, gameNftAddr, walletAddr string) error {
 	nftResults := make([]response.NftResult, 0)
 	err := qm.sched.Schedule(ctx, model.NftQuery, func(ctx context.Context) error {
-		nftResults, err := QueryWalletNft("", walletAddr, qm.network, nftResults)
-		log.Infof("query wallet result : %+v", nftResults)
+		results, err := QueryWalletNft("", gameNftAddr, walletAddr, qm.network, nftResults)
+		log.Infof("query wallet result : %+v", results)
+		nftResults = results
 		return err
 	})
 	if err != nil {
 		return err
 	}
-	_, err = qm.handleNftData(walletAddr, nftResults)
+	_, err = qm.handleNftData(gameNftAddr, walletAddr, nftResults)
 	return err
 }
 
@@ -162,8 +163,9 @@ func (qm *QueryManager) QueryERC20TxRecord(ctx context.Context, walletAddr strin
 func (qm *QueryManager) queryERC20TxRecord(ctx context.Context, walletAddr string, contractAddr string) error {
 	bscResults := response.BscResult{}
 	err := qm.sched.Schedule(ctx, model.Erc20TxRecordQuery, func(ctx context.Context) error {
-		bscResults, err := queryERC20TxRecord(contractAddr, walletAddr)
-		log.Infof("query er20 tx record result : %+v", bscResults)
+		results, err := queryERC20TxRecord(contractAddr, walletAddr)
+		log.Infof("query er20 tx record result : %+v", results)
+		bscResults = results
 		return err
 	})
 	if err != nil {
@@ -176,8 +178,9 @@ func (qm *QueryManager) queryERC20TxRecord(ctx context.Context, walletAddr strin
 func (qm *QueryManager) queryNativeTxRecord(ctx context.Context, walletAddr string) error {
 	bscResults := response.BscResult{}
 	err := qm.sched.Schedule(ctx, model.NativeTxRecordQuery, func(ctx context.Context) error {
-		bscResults, err := queryNativeTxRecord(walletAddr)
-		log.Infof("query native tx record result : %+v", bscResults)
+		results, err := queryNativeTxRecord(walletAddr)
+		log.Infof("query native tx record result : %+v", results)
+		bscResults = results
 		return err
 	})
 	if err != nil {
