@@ -179,8 +179,8 @@ func (w *AllRoundWorker) SignatureTransaction(unSignTX *types.Transaction) (*typ
 }
 
 func (w *AllRoundWorker) BatchMint(reqs []model.BatchMintReq) ([]string, string, error) {
-	w.Lock()
-	defer w.UnLock()
+	w.rLK.Lock()
+	defer w.rLK.Unlock()
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {
@@ -269,6 +269,8 @@ func (w *AllRoundWorker) WithdrawToken(reqs []model.WithdrawTokenReq) ([]string,
 		tokenAddrs = append(tokenAddrs, reqs[i].TokenAddress)
 	}
 
+	log.Infof("===Spike log : uuids:%v ;toAddrs:%v ; tokenAddrs: %v ; amounts: %v", uuids, toAddrs, tokenAddrs, amounts)
+
 	inputData, err := w.vaultABI.Pack("batchWithdraw0", tokenAddrs, toAddrs, amounts)
 	if err != nil {
 		return nil, "", err
@@ -330,6 +332,8 @@ func (w *AllRoundWorker) WithdrawNFT(reqs []model.WithdrawNFTReq) ([]string, str
 		toAddrs = append(toAddrs, reqs[i].ToAddress)
 		tokenAddrs = append(tokenAddrs, reqs[i].TokenAddress)
 	}
+
+	log.Infof("===Spike log : uuids:%v ;toAddrs:%v ; tokenAddrs: %v ; tokenIds: %v", uuids, toAddrs, tokenAddrs, tokenIds)
 
 	inputData, err := w.vaultABI.Pack("batchWithdrawNFT", tokenAddrs, toAddrs, tokenIds)
 	if err != nil {
