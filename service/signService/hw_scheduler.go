@@ -15,6 +15,7 @@ type hotWalletScheduler struct {
 	gorm game.TxTracker
 
 	taskLK  sync.RWMutex
+	wLK     sync.Mutex
 	workers []Worker
 
 	mintSched  chan *model.BatchMintReq
@@ -166,10 +167,14 @@ func (hw *hotWalletScheduler) schedNFTTask() {
 }
 
 func (hw *hotWalletScheduler) pickRightWorker() Worker {
+	hw.wLK.Lock()
+	defer hw.wLK.Unlock()
+
 	sort.Slice(hw.workers, func(i, j int) bool {
 		return hw.workers[i].GetInfo().TaskNum < hw.workers[j].GetInfo().TaskNum
 	})
 
+	hw.workers[0].AddTaskNum()
 	return hw.workers[0]
 }
 

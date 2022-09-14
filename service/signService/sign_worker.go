@@ -4,8 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/go-redis/redis/v8"
 	"github.com/go-resty/resty/v2"
+	"github.com/google/uuid"
 	"math/big"
 	chain "spike-frame/chain/abi"
 	"spike-frame/config"
@@ -18,12 +23,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
 )
 
 type WorkerID uuid.UUID // worker session UUID
@@ -38,6 +37,7 @@ type Worker interface {
 	Lock() bool
 	UnLock()
 	SignatureTransaction(*types.Transaction) (*types.Transaction, error)
+	AddTaskNum()
 }
 
 type WorkerCalls interface {
@@ -52,7 +52,7 @@ type AllRoundWorker struct {
 	rdb        *redis.Client
 
 	info     *WorkerInfo
-	nLK      sync.Mutex
+	rLK      sync.Mutex
 	nftABI   abi.ABI
 	vaultABI abi.ABI
 }
@@ -63,7 +63,7 @@ type WorkerInfo struct {
 	TaskNum       uint32
 }
 
-func NewAllRoundWorker() (*AllRoundWorker, error) {
+func NewAllRoundWorker(workers config.SignWorker) (*AllRoundWorker, error) {
 
 	bscClient, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
 	if err != nil {
@@ -85,8 +85,8 @@ func NewAllRoundWorker() (*AllRoundWorker, error) {
 	}
 
 	info := &WorkerInfo{
-		walletAddress: config.Cfg.SignWorkers[0].WalletAddress,
-		serverUrl:     config.Cfg.SignWorkers[0].ServerUrl,
+		walletAddress: workers.WalletAddress,
+		serverUrl:     workers.ServerUrl,
 	}
 
 	worker := &AllRoundWorker{
@@ -113,7 +113,7 @@ func (w *AllRoundWorker) GetInfo() *WorkerInfo {
 }
 
 func (w *AllRoundWorker) Lock() bool {
-	lock, err := util.Lock(w.GetInfo().walletAddress, 1, 10*time.Second, w.rdb)
+	lock, err := util.Lock(w.GetInfo().walletAddress, 1, 30*time.Second, w.rdb)
 	if err != nil {
 		log.Error("===Spike log:", err)
 		return false
@@ -148,6 +148,10 @@ func (w *AllRoundWorker) GetCNonce() (uint64, error) {
 		return 0, err
 	}
 	return nonce, nil
+}
+
+func (w *AllRoundWorker) AddTaskNum() {
+	w.info.TaskNum++
 }
 
 func (w *AllRoundWorker) SignatureTransaction(unSignTX *types.Transaction) (*types.Transaction, error) {
@@ -201,6 +205,8 @@ func (w *AllRoundWorker) BatchMint(reqs []model.BatchMintReq) ([]string, string,
 		tokenUris = append(tokenUris, reqs[i].TokenURI)
 	}
 
+	log.Infof("===Spike log : uuids:%v ;tokenids:%v ; tokenUris: %v", uuids, tokenIds, tokenUris)
+
 	inputData, err := w.nftABI.Pack("batchMint0", tokenIds, common.HexToAddress(config.Cfg.Contract.GameVaultAddress), tokenUris)
 	if err != nil {
 		return nil, "", err
@@ -235,8 +241,8 @@ func (w *AllRoundWorker) BatchMint(reqs []model.BatchMintReq) ([]string, string,
 }
 
 func (w *AllRoundWorker) WithdrawToken(reqs []model.WithdrawTokenReq) ([]string, string, error) {
-	w.Lock()
-	defer w.UnLock()
+	w.rLK.Lock()
+	defer w.rLK.Unlock()
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {
@@ -297,8 +303,8 @@ func (w *AllRoundWorker) WithdrawToken(reqs []model.WithdrawTokenReq) ([]string,
 }
 
 func (w *AllRoundWorker) WithdrawNFT(reqs []model.WithdrawNFTReq) ([]string, string, error) {
-	w.Lock()
-	defer w.UnLock()
+	w.rLK.Lock()
+	defer w.rLK.Unlock()
 
 	rNonce, err := w.GetRNonce()
 	if err != nil {

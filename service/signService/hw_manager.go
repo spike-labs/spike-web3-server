@@ -13,6 +13,7 @@ import (
 	"spike-frame/model"
 	"spike-frame/request"
 	"spike-frame/util"
+	"sync"
 	"time"
 )
 
@@ -22,6 +23,7 @@ type HotWalletManager struct {
 	scheduler *hotWalletScheduler
 	gorm      game.TxTracker
 	rdb       *redis.Client
+	rLK       sync.RWMutex
 }
 
 func NewHWManager() (*HotWalletManager, error) {
@@ -44,7 +46,7 @@ func NewHWManager() (*HotWalletManager, error) {
 	}
 
 	for i := 0; i < len(config.Cfg.SignWorkers); i++ {
-		worker, err := NewAllRoundWorker()
+		worker, err := NewAllRoundWorker(config.Cfg.SignWorkers[i])
 		if err != nil {
 			log.Error("===Spike log:", err)
 			return nil, err
@@ -61,7 +63,7 @@ func (w *HotWalletManager) AddWorker(worker Worker) {
 }
 
 func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error {
-
+	w.rLK.Lock()
 	TokenId, _, err := util.GetIntFromRedis(constant.TOKENID, w.rdb)
 	if err != nil {
 		return err
@@ -77,6 +79,7 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error 
 	if err != nil {
 		return err
 	}
+	w.rLK.Unlock()
 
 	err = w.gorm.SaveTxCb(model.SpikeTx{
 		OrderId:         service.OrderId,

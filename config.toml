@@ -13,7 +13,7 @@ urlPrefix = "https://api-testnet.bscscan.com/api"
 gameNftAddress = "0x9E30e0De5682bced703275fb4dCad78EddCC592D"
 governanceTokenAddress = "0xe36A654e5B5CC3678f4824a23e7B24e0A3EC6783"
 gameTokenAddress = "0x32661f9851CC487d91A4Edc2ac421D48B4aEE942"
-gameVaultAddress = "0xDd77BBAafc52BDfA84Bb98a095dfb715f8280870"
+gameVaultAddress = "0xd14a5EA372aB42B6254C1704Fc939E08391d7E5A"
 usdcAddress = "0x64544969ed7EBf5f083679233325356EbE738930"
 
 [redis]
@@ -34,11 +34,11 @@ maxIdleConns = 0
 maxOpenConns = 0
 
 [signService]
-taskThreshold = 1000
+taskThreshold = 10
 schedInterval = 1
 
 [[signWorkers]]
-walletAddress = "0x550bB66C3050C2e9C5DC2b35aa924485b48B67d0"
+walletAddress = "0xe60929ea446c02efa52343ca5c67b5bfc706a984"
 serverUrl = "http://chris.dag.fan:3000/tx-api/v1/tx/signature"
 
 [[signWorkers]]
