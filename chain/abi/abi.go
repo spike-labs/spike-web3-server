@@ -128,8 +128,7 @@ var GameVaultABI = `[
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -183,8 +182,7 @@ var GameVaultABI = `[
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -197,8 +195,7 @@ var GameVaultABI = `[
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -218,8 +215,7 @@ var GameVaultABI = `[
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -241,8 +237,7 @@ var GameVaultABI = `[
   },
   {
     "stateMutability": "payable",
-    "type": "receive",
-    "payable": true
+    "type": "receive"
   },
   {
     "inputs": [
@@ -339,9 +334,9 @@ var GameVaultABI = `[
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "tokens",
+        "type": "address[]"
       },
       {
         "internalType": "address[]",
@@ -415,8 +410,7 @@ var GameVaultABI = `[
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -447,10 +441,10 @@ var GameVaultABI = `[
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   }
-]`
+]
+`
 
 var ERC721ContractABI = `[
   {
