@@ -126,7 +126,7 @@ func (txGroup *TxGroup) BatchWithdrawToken(c *gin.Context) {
 // @Param   order_id     formData string true "game orderId"
 // @Param   from_address formData string true "tx fromAddress"
 // @Param   amount       formData string true "tx token amount"
-// @Param   tx_type      formData int    true "tx type"
+// @Param   contract_address formData string true "token contract address(native : 0x0000000000000000000000000000000000000000)"
 // @Param   tx_hash      formData string true "tx hash"
 // @Param   cb           formData string true "game callBack url address"
 // @Success 200          {object} response.Response
@@ -153,6 +153,7 @@ func (txGroup *TxGroup) RechargeToken(c *gin.Context) {
 // @Produce json
 // @Param   order_id     formData string true "game orderId"
 // @Param   from_address formData string true "tx fromAddress"
+// @Param   contract_address formData string true "nft contract address"
 // @Param   token_id     formData int    true "nft token id"
 // @Param   tx_hash      formData string true "tx hash"
 // @Param   cb           formData string true "game callBack url address"

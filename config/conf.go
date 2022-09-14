@@ -71,11 +71,9 @@ type Redis struct {
 }
 
 type Contract struct {
-	GameNftAddress         string `toml:"gameNftAddress"`
-	GovernanceTokenAddress string `toml:"governanceTokenAddress"`
-	GameTokenAddress       string `toml:"gameTokenAddress"`
-	GameVaultAddress       string `toml:"gameVaultAddress"`
-	UsdcAddress            string `toml:"usdcAddress"`
+	NftContractAddress   []string `toml:"nft_contract"`
+	ERC20ContractAddress []string `toml:"erc20_contract"`
+	GameVaultAddress     string   `toml:"game_vault_address"`
 }
 
 type SignService struct {

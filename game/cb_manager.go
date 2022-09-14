@@ -16,8 +16,8 @@ import (
 var log = logger.Logger("game")
 
 const (
-	HANDLEDURATION      = time.Minute
-	TXTIMEOUTDURATION   = 5 * time.Minute
+	HANDLEDURATION      = 5 * time.Minute
+	TXTIMEOUTDURATION   = 20 * time.Minute
 	LOCKTIMEOUTDURATION = 5 * time.Minute
 )
 

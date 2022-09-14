@@ -16,12 +16,12 @@ var log = logger.Logger("service")
 
 var MoralisRateLimit = "{\"message\":\"Rate limit exceeded.\"}"
 
-func QueryWalletNft(cursor, walletAddr, network string, res []response.NftResult) ([]response.NftResult, error) {
+func QueryWalletNft(cursor, gameNftAddress, walletAddr, network string, res []response.NftResult) ([]response.NftResult, error) {
 	client := resty.New()
 	resp, err := client.R().
 		SetHeader("Accept", "application/json").
 		SetHeader("x-api-key", config.Cfg.Moralis.XApiKey).
-		Get(getUrl(config.Cfg.Contract.GameNftAddress, walletAddr, network, cursor))
+		Get(getUrl(gameNftAddress, walletAddr, network, cursor))
 	if err != nil {
 		log.Errorf("query wallet nft , wallet : %s, err : %+v", walletAddr, err)
 		return res, err
@@ -40,7 +40,7 @@ func QueryWalletNft(cursor, walletAddr, network string, res []response.NftResult
 	if nrs.Page*nrs.PageSize >= nrs.Total {
 		return res, nil
 	}
-	res, err = QueryWalletNft(nrs.Cursor, walletAddr, network, res)
+	res, err = QueryWalletNft(nrs.Cursor, gameNftAddress, walletAddr, network, res)
 	return res, nil
 }
 
@@ -48,8 +48,8 @@ func getUrl(contractAddr, walletAddr, network, cursor string) string {
 	return fmt.Sprintf("%s%s/nft/%s?chain=%s&cursor=%s", constant.MORALIS_API, walletAddr, contractAddr, network, cursor)
 }
 
-func (qm *QueryManager) handleNftData(walletAddr string, data []response.NftResult) ([]response.NftResult, error) {
-	data = util.ConvertNftResult(data)
+func (qm *QueryManager) handleNftData(gameNftAddress, walletAddr string, data []response.NftResult) ([]response.NftResult, error) {
+	data = util.ConvertNftResult(gameNftAddress, data)
 	dataList := util.ParseMetadata(data)
 	dataMap := util.ParseCacheData(dataList)
 	nftType := make([]response.NftType, 0)
@@ -63,13 +63,13 @@ func (qm *QueryManager) handleNftData(walletAddr string, data []response.NftResu
 		if err != nil {
 			break
 		}
-		util.SetFromRedis(walletAddr+constant.NFTLISTSUFFIX+k, string(cacheByte), nftListDuration, qm.redisClient)
+		util.SetFromRedis(walletAddr+gameNftAddress+constant.NFTLISTSUFFIX+k, string(cacheByte), nftListDuration, qm.redisClient)
 	}
 
 	nftTypeByte, err := json.Marshal(nftType)
 	if err != nil {
 		return data, err
 	}
-	util.SetFromRedis(walletAddr+constant.NFTTYPESUFFIX, string(nftTypeByte), nftListDuration, qm.redisClient)
+	util.SetFromRedis(walletAddr+gameNftAddress+constant.NFTTYPESUFFIX, string(nftTypeByte), nftListDuration, qm.redisClient)
 	return data, nil
 }

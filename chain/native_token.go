@@ -12,7 +12,6 @@ import (
 	"spike-frame/constant"
 	"spike-frame/game"
 	"spike-frame/global"
-	"spike-frame/model"
 	"spike-frame/util"
 	"strings"
 	"sync"
@@ -40,12 +39,12 @@ func (bl *BNBListener) AttachObserver(observer cache.Observer) {
 	}
 }
 
-func (bl *BNBListener) Accept(fromAddr, toAddr string) (bool, uint64) {
+func (bl *BNBListener) Accept(fromAddr, toAddr string) bool {
 	if strings.ToLower(config.Cfg.Contract.GameVaultAddress) == strings.ToLower(toAddr) {
-		return true, constant.NATIVE_RECHARGE
+		return true
 	}
 
-	return false, constant.NOT_EXIST
+	return false
 }
 
 type BNBListener struct {
@@ -98,9 +97,9 @@ func (bl *BNBListener) NewBlockFilter() error {
 				for i := cacheHeight + 1; i < height.Int64(); i++ {
 					log.Infof("ws node timeout err : height %d", i)
 					bl.errorHandler <- ErrMsg{
-						tp:   model.Bnb,
-						from: big.NewInt(i),
-						to:   big.NewInt(i),
+						contractAddr: constant.EmptyAddress,
+						from:         big.NewInt(i),
+						to:           big.NewInt(i),
 					}
 					util.Eb.Publish(constant.NewBlockTopic, big.NewInt(i))
 				}
@@ -111,9 +110,9 @@ func (bl *BNBListener) NewBlockFilter() error {
 			err = bl.SingleBlockFilter(height)
 			if err != nil {
 				bl.errorHandler <- ErrMsg{
-					tp:   model.Bnb,
-					from: height,
-					to:   height,
+					contractAddr: constant.EmptyAddress,
+					from:         height,
+					to:           height,
 				}
 			}
 			util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, height.Int64(), 0, global.RedisClient)
@@ -137,9 +136,9 @@ func (bl *BNBListener) handlePastBlock(blockNum, nowBlockNum *big.Int) error {
 			err := bl.SingleBlockFilter(h)
 			if err != nil {
 				bl.errorHandler <- ErrMsg{
-					tp:   model.Bnb,
-					from: h,
-					to:   h,
+					contractAddr: constant.EmptyAddress,
+					from:         h,
+					to:           h,
 				}
 			}
 		}(i)
@@ -166,8 +165,7 @@ func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
 		if tx.Value().Int64() == 0 {
 			continue
 		}
-		accept, _ := bl.Accept(fromAddr, tx.To().Hex())
-		if !accept {
+		if accept := bl.Accept(fromAddr, tx.To().Hex()); !accept {
 			continue
 		}
 		recp, err := bl.ec.TransactionReceipt(context.Background(), tx.Hash())

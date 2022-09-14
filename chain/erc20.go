@@ -14,7 +14,6 @@ import (
 	"spike-frame/constant"
 	"spike-frame/game"
 	"spike-frame/global"
-	"spike-frame/model"
 	"spike-frame/util"
 	"strings"
 	"sync"
@@ -41,37 +40,20 @@ func (e *ERC20Listener) AttachObserver(observer cache.Observer) {
 	}
 }
 
-func (e *ERC20Listener) Accept(fromAddr, toAddr string) (bool, uint64) {
+func (e *ERC20Listener) Accept(fromAddr, toAddr string) bool {
 	if strings.ToLower(config.Cfg.Contract.GameVaultAddress) == strings.ToLower(toAddr) {
-		switch e.tokenType {
-		case model.Usdc:
-			return true, constant.USDC_RECHARGE
-		case model.GameToken:
-			return true, constant.GAMETOKEN_RECHARGE
-		case model.GovernanceToken:
-			return true, constant.GOVERNANCETOKEN_RECHARGE
-		}
+		return true
 	}
 
 	if strings.ToLower(config.Cfg.Contract.GameVaultAddress) == strings.ToLower(fromAddr) {
-		switch e.tokenType {
-		case model.Usdc:
-			return true, constant.USDC_WITHDRAW
-		case model.GameToken:
-			return true, constant.GAMETOKEN_WITHDRAW
-		case model.GovernanceToken:
-			return true, constant.GOVERNANCE_WITHDRAW
-		case model.GameVault:
-			return true, constant.NATIVE_WITHDRAW
-		}
+		return true
 	}
 
-	return false, constant.NOT_EXIST
+	return false
 }
 
 type ERC20Listener struct {
 	contractAddr   string
-	tokenType      model.TokenType
 	newBlockNotify util.DataChannel
 	ec             *ethclient.Client
 	abi            abi.ABI
@@ -80,10 +62,9 @@ type ERC20Listener struct {
 	observerLk     sync.Mutex
 }
 
-func newERC20Listener(contractAddr string, tokenType model.TokenType, ec *ethclient.Client, newBlockNotify util.DataChannel, abi abi.ABI, errorHandler chan ErrMsg) *ERC20Listener {
+func newERC20Listener(contractAddr string, ec *ethclient.Client, newBlockNotify util.DataChannel, abi abi.ABI, errorHandler chan ErrMsg) *ERC20Listener {
 	el := &ERC20Listener{
 		contractAddr:   contractAddr,
-		tokenType:      tokenType,
 		newBlockNotify: newBlockNotify,
 		ec:             ec,
 		abi:            abi,
@@ -109,7 +90,7 @@ func (el *ERC20Listener) NewEventFilter(contractAddr string) error {
 }
 
 func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) error {
-	log.Infof("erc20 past event filter, type : %v, fromBlock : %d, toBlock : %d ", el.tokenType.String(), fromBlockNum, toBlockNum)
+	log.Infof("erc20 past event filter, type : %v, fromBlock : %d, toBlock : %d ", el.contractAddr, fromBlockNum, toBlockNum)
 	ethClient := el.ec
 	contractAddress := common.HexToAddress(el.contractAddr)
 
@@ -122,20 +103,20 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 	sub, err := ethClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		el.errorHandler <- ErrMsg{
-			tp:   el.tokenType,
-			from: fromBlockNum,
-			to:   toBlockNum,
+			contractAddr: el.contractAddr,
+			from:         fromBlockNum,
+			to:           toBlockNum,
 		}
-		log.Errorf("erc20 subscribe err : %+v, from : %d, to : %d, type : %s", err, fromBlockNum.Int64(), toBlockNum.Int64(), el.tokenType.String())
+		log.Errorf("erc20 subscribe err : %+v, from : %d, to : %d, type : %s", err, fromBlockNum.Int64(), toBlockNum.Int64(), el.contractAddr)
 		return err
 	}
 	for _, logEvent := range sub {
 		switch logEvent.Topics[0].String() {
 		case util.EventSignHash(chain.TRANSFERTOPIC):
 			msg := ErrMsg{
-				tp:   el.tokenType,
-				from: big.NewInt(int64(logEvent.BlockNumber)),
-				to:   big.NewInt(int64(logEvent.BlockNumber)),
+				contractAddr: el.contractAddr,
+				from:         big.NewInt(int64(logEvent.BlockNumber)),
+				to:           big.NewInt(int64(logEvent.BlockNumber)),
 			}
 
 			input, err := el.abi.Events["Transfer"].Inputs.Unpack(logEvent.Data)
@@ -146,8 +127,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 			}
 			fromAddr := common.HexToAddress(logEvent.Topics[1].Hex()).String()
 			toAddr := common.HexToAddress(logEvent.Topics[2].Hex()).String()
-			accept, _ := el.Accept(fromAddr, toAddr)
-			if !accept {
+			if accept := el.Accept(fromAddr, toAddr); !accept {
 				break
 			}
 			recp, err := el.ec.TransactionReceipt(context.Background(), logEvent.TxHash)
@@ -162,13 +142,13 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", logEvent.BlockNumber, err)
 				break
 			}
-			log.Infof("erc20 tx ,from :%s, to : %s, type : %s,  amount : %s", fromAddr, toAddr, el.tokenType.String(), input[0].(*big.Int).String())
+			log.Infof("erc20 tx ,from :%s, to : %s, type : %s,  amount : %s", fromAddr, toAddr, el.contractAddr, input[0].(*big.Int).String())
 			el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		case util.EventSignHash(chain.WITHRAWALTOPIC):
 			msg := ErrMsg{
-				tp:   el.tokenType,
-				from: big.NewInt(int64(logEvent.BlockNumber)),
-				to:   big.NewInt(int64(logEvent.BlockNumber)),
+				contractAddr: el.contractAddr,
+				from:         big.NewInt(int64(logEvent.BlockNumber)),
+				to:           big.NewInt(int64(logEvent.BlockNumber)),
 			}
 			input, err := el.abi.Events["Withdraw"].Inputs.Unpack(logEvent.Data)
 			if err != nil {
@@ -181,8 +161,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 			}
 			fromAddr := input[1].(common.Address).String()
 			toAddr := input[2].(common.Address).String()
-			accept, _ := el.Accept(fromAddr, toAddr)
-			if !accept {
+			if accept := el.Accept(fromAddr, toAddr); !accept {
 				break
 			}
 			recp, err := el.ec.TransactionReceipt(context.Background(), logEvent.TxHash)
@@ -197,7 +176,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", logEvent.BlockNumber, err)
 				break
 			}
-			log.Infof("erc20 tx ,from :%s, to : %s, type : %s,  amount : %s", fromAddr, toAddr, el.tokenType.String(), input[0].(*big.Int).String())
+			log.Infof("erc20 tx ,from :%s, to : %s, type : %s,  amount : %s", fromAddr, toAddr, el.contractAddr, input[3].(*big.Int).String())
 			el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		}
 	}

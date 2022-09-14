@@ -1,11 +1,17 @@
 package queryService
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/xerrors"
+	"math/big"
 	"sort"
+	chain "spike-frame/chain/abi"
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/response"
@@ -20,7 +26,6 @@ const txRecordDuration = 10 * time.Minute
 
 func queryNativeTxRecord(address string) (response.BscResult, error) {
 	bscRes := response.BscResult{Result: make([]response.TxResult, 0)}
-	bscInternalRes := response.BscResult{Result: make([]response.TxResult, 0)}
 
 	blockNum, err := util.QueryBlockHeight()
 	if err != nil {
@@ -37,18 +42,6 @@ func queryNativeTxRecord(address string) (response.BscResult, error) {
 	if err != nil {
 		return bscRes, xerrors.New(BscScanRateLimit)
 	}
-
-	resp, err = client.R().
-		SetHeader("Accept", "application/json").
-		Get(getNativeInternalUrl(blockNum, address))
-	if err != nil {
-		return bscRes, err
-	}
-	err = json.Unmarshal(resp.Body(), &bscInternalRes)
-	if err != nil {
-		return bscRes, xerrors.New(BscScanRateLimit)
-	}
-	bscRes.Result = append(bscRes.Result, bscInternalRes.Result...)
 	return bscRes, nil
 }
 
@@ -75,7 +68,6 @@ func queryERC20TxRecord(contractAddr, address string) (response.BscResult, error
 
 func (qm *QueryManager) handleNativeTxRecordData(walletAddr string, data response.BscResult) (response.BscResult, error) {
 	bnbRecord := make([]response.TxResult, 0)
-
 	if len(data.Result) == 0 {
 		data.Result = make([]response.TxResult, 0)
 		cacheData, _ := json.Marshal(data)
@@ -88,9 +80,35 @@ func (qm *QueryManager) handleNativeTxRecordData(walletAddr string, data respons
 			bnbRecord = append(bnbRecord, data.Result[i])
 			continue
 		}
-		if strings.ToLower(data.Result[i].From) == strings.ToLower(config.Cfg.Contract.GameVaultAddress) {
+		methodId := data.Result[i].Input[0:10]
+		switch methodId {
+		case hexutil.Encode(util.GetTxMethodName("swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)")):
+			height, err := strconv.ParseInt(data.Result[i].BlockNumber, 10, 64)
+			query := ethereum.FilterQuery{
+				FromBlock: big.NewInt(height),
+				ToBlock:   big.NewInt(height),
+			}
+			bscClient, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
+			if err != nil {
+				log.Errorf("")
+				break
+			}
+			sub, err := bscClient.FilterLogs(context.Background(), query)
+
+			for _, logEvent := range sub {
+				if logEvent.Topics[0].String() == util.EventSignHash(chain.WITHRAWALTOPIC) {
+					data.Result[i].Type = "Receive"
+					value := new(big.Int)
+					value.SetString(strings.Split(hexutil.Encode(logEvent.Data), "0x")[1], 16)
+
+					data.Result[i].Value = value.String()
+					bnbRecord = append(bnbRecord, data.Result[i])
+					break
+				}
+			}
+		case hexutil.Encode(util.GetTxMethodName("swapExactETHForTokens(uint256,address[],address,uint256)")):
+			data.Result[i].Type = "Send"
 			bnbRecord = append(bnbRecord, data.Result[i])
-			continue
 		}
 	}
 	sort.Slice(bnbRecord, func(i, j int) bool {
@@ -105,7 +123,6 @@ func (qm *QueryManager) handleNativeTxRecordData(walletAddr string, data respons
 }
 
 func (qm *QueryManager) handleERC20TxRecordData(walletAddr string, contractAddr string, data response.BscResult) (response.BscResult, error) {
-	log.Infof("query er20 tx record result : %+v", data)
 	if len(data.Result) == 0 {
 		data.Result = make([]response.TxResult, 0)
 		cacheData, _ := json.Marshal(data)
