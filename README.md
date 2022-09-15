@@ -31,21 +31,22 @@ vim /etc/systemd/system/spike-frame-server.service
 Specify the path to the binary
 ```markdown
 [Service] 
-ExecStart=/root/go/src/github.com/donny/spike-blockchain-server/spike-frame-server
+ExecStart=/root/go/src/github.com/spike-engine/spike-frame-server/spike-frame-server
 Environment=CONFIG_PATH=/etc/config.toml
 Restart=always
 RestartSec=5 
 ```
 ```shell
-systemctl start spike-frame-server
-
+systemctl daemon-reload
+systemctl start spike-frame-server.service
+journalctl -u chain-server.service -f
 ```
 Of course, you can click the build icon in your IDE to run the project instead of startup script.
 But, we recommend using system script in mainnet.
 
 ### config
 If you don't specify the path to the configuration file in the environment variable in the startup script, 
-config.toml is the default.And config.toml is also a demo.
+config.toml is the default.And config-example.toml is a demo.
 
 You should configure some information about system port, mysql , redis, contract address etc.
 

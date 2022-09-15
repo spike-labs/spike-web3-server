@@ -143,7 +143,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 				break
 			}
 			log.Infof("erc20 tx ,from :%s, to : %s, type : %s,  amount : %s", fromAddr, toAddr, el.contractAddr, input[0].(*big.Int).String())
-			el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
+			go el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		case util.EventSignHash(chain.WITHRAWALTOPIC):
 			msg := ErrMsg{
 				contractAddr: el.contractAddr,
@@ -177,7 +177,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 				break
 			}
 			log.Infof("erc20 tx ,from :%s, to : %s, type : %s,  amount : %s", fromAddr, toAddr, el.contractAddr, input[3].(*big.Int).String())
-			el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
+			go el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		}
 	}
 	return err
