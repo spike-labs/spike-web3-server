@@ -121,8 +121,8 @@ func (el *ERC721Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) err
 			fromAddr := common.HexToAddress(logEvent.Topics[1].Hex()).String()
 			toAddr := common.HexToAddress(logEvent.Topics[2].Hex()).String()
 
-			el.Notify(cache.ClearEvent{FromAddr: fromAddr, ToAddr: toAddr})
-			el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
+			go el.Notify(cache.ClearEvent{FromAddr: fromAddr, ToAddr: toAddr})
+			go el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		}
 	}
 	return nil

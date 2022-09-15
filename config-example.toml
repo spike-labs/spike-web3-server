@@ -1,0 +1,50 @@
+[system]
+port = ":3000"
+machineId = "1"
+
+[moralis]
+xApiKey = "xxx"
+
+[bscscan]
+apiKey = "xxx"
+urlPrefix = "https://api-testnet.bscscan.com/api"
+
+[contract]
+erc20_contract=["xxx","xxx","xxx"]
+nft_contract=["xx"]
+game_vault_address = "xx"
+
+
+[redis]
+address = "xx"
+password = ""
+
+[chain]
+wsNodeAddress = "xx"
+rpcNodeAddress = "xx"
+
+[mysql]
+path = "xxx"
+port = "3306"
+dbName = "spike_frame_server"
+username = "root"
+password = "xxx"
+maxIdleConns = 0
+maxOpenConns = 0
+
+[signService]
+taskThreshold = 20
+schedInterval = 1
+
+[[signWorkers]]
+walletAddress = "xx"
+serverUrl = "xx"
+
+[[signWorkers]]
+walletAddress = "xxx"
+serverUrl = "xx"
+
+[limit]
+nftLimit = 12
+txRecordLimit = 12
+

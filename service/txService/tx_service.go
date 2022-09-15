@@ -1,6 +1,7 @@
 package txService
 
 import (
+	"spike-frame/config"
 	"spike-frame/global"
 	"spike-frame/model"
 	"spike-frame/request"
@@ -16,6 +17,7 @@ func (t *TxService) RechargeToken(service request.RechargeTokenService) error {
 	tx := model.SpikeTx{
 		OrderId:         service.OrderId,
 		From:            service.FromAddress,
+		To:              config.Cfg.Contract.GameVaultAddress,
 		Amount:          service.Amount,
 		ContractAddress: service.ContractAddress,
 		TxHash:          service.TxHash,
@@ -29,6 +31,7 @@ func (t *TxService) ImportNft(service request.ImportNftService) error {
 	tx := model.SpikeTx{
 		OrderId:         service.OrderId,
 		From:            service.From,
+		To:              config.Cfg.Contract.GameVaultAddress,
 		TokenId:         service.TokenId,
 		ContractAddress: service.ContractAddress,
 		TxHash:          service.TxHash,

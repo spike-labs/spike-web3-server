@@ -8,6 +8,7 @@ import (
 	"spike-frame/config"
 	"spike-frame/constant"
 	"spike-frame/global"
+	"spike-frame/model"
 	"spike-frame/util"
 	"sync"
 	"time"
@@ -16,7 +17,7 @@ import (
 var log = logger.Logger("game")
 
 const (
-	HANDLEDURATION      = 5 * time.Minute
+	HANDLEDURATION      = 10 * time.Minute
 	TXTIMEOUTDURATION   = 20 * time.Minute
 	LOCKTIMEOUTDURATION = 5 * time.Minute
 )
@@ -44,15 +45,16 @@ func NewCbManager(tracker TxTracker) *CbManager {
 }
 
 func (cm *CbManager) Update(event interface{}) {
-	util.Lock(constant.TXCBKEY, constant.TXCBVALUE, LOCKTIMEOUTDURATION, global.RedisClient)
-	defer util.UnLock(constant.TXCBKEY, global.RedisClient)
 
 	e, ok := event.(NotifyEvent)
 	if !ok {
 		return
 	}
+	util.Lock(e.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, global.RedisClient)
 
-	txs, err := cm.QueryGameCb(e.TxHash)
+	defer util.UnLock(e.TxHash, global.RedisClient)
+
+	txs, err := cm.QueryGameCb(e.TxHash, constant.NOTNOTIFIED)
 	if err != nil {
 		log.Errorf("query game cb err : %v", err)
 		return
@@ -62,8 +64,13 @@ func (cm *CbManager) Update(event interface{}) {
 			log.Infof("tx %s has been notify", tx.TxHash)
 			continue
 		}
-		log.Infof("cb : %s", tx.Cb)
-		err := cm.UpdateTxStatus(tx.TxHash, e.Status, e.PayTime)
+		var txStatus int
+		txStatus = constant.TXSUCCESS
+		if e.Status == 0 {
+			txStatus = constant.TXFAILED
+		}
+		log.Infof("txHash : %s, orderId : %s, cb : %s", tx.TxHash, tx.OrderId, tx.Cb)
+		err := cm.UpdateTxStatus(tx.TxHash, txStatus, e.PayTime)
 		if err != nil {
 			log.Errorf("update tx :%s status err : %v", tx.TxHash, err)
 			continue
@@ -74,7 +81,9 @@ func (cm *CbManager) Update(event interface{}) {
 			continue
 		} else {
 			err = cm.UpdateTxNotifyStatus(tx.OrderId, constant.NOTIFIED)
-			log.Errorf("update tx notify status order id : %s ,err : %v", tx.OrderId, err)
+			if err != nil {
+				log.Errorf("update tx notify status order id : %s ,err : %v", tx.OrderId, err)
+			}
 		}
 	}
 }
@@ -90,39 +99,47 @@ func (cm *CbManager) Run() {
 				break
 			}
 			for _, tx := range txs {
-				if time.Now().After(time.UnixMilli(tx.CreateTime).Add(TXTIMEOUTDURATION)) {
-					log.Infof("tx cb timeout handle, orderId: %s, txHash : %s, createTime : %d", tx.OrderId, tx.TxHash, tx.CreateTime)
-					client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
-					if err != nil {
-						log.Errorf("eth client dial err : %v", err)
-						continue
-					}
-					receipt, err := client.TransactionReceipt(context.Background(), common.HexToHash(tx.TxHash))
-					if err != nil {
-						log.Errorf("query tx receipt status err : %v", err)
-						continue
-					}
-					var txStatus int
-					if receipt.Status == 0 {
-						txStatus = constant.TXFAILED
-					}
-					txStatus = constant.TXSUCCESS
-					err = cm.UpdateTxStatus(tx.TxHash, txStatus, tx.PayTime)
-					if err != nil {
-						log.Errorf("update tx status err : %v", err)
-						continue
-					}
-					err = executeCb(tx.Cb)
-					if err != nil {
-						log.Errorf("execute cb order id : %s ,err : %v", tx.OrderId, err)
-						continue
-					}
-					err = cm.UpdateTxNotifyStatus(tx.OrderId, int64(constant.NOTIFIED))
-					if err != nil {
-						log.Errorf("update tx notify status : %s ,err : %v", tx.OrderId, err)
-					}
-				}
+				cm.handleNotNotifiedTx(tx)
 			}
+		}
+	}
+}
+
+func (cm *CbManager) handleNotNotifiedTx(tx model.SpikeTx) {
+	if time.Now().After(time.UnixMilli(tx.CreateTime).Add(TXTIMEOUTDURATION)) {
+		util.Lock(tx.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, global.RedisClient)
+
+		defer util.UnLock(tx.TxHash, global.RedisClient)
+
+		log.Infof("tx cb timeout handle, orderId: %s, txHash : %s, createTime : %d", tx.OrderId, tx.TxHash, tx.CreateTime)
+		client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
+		if err != nil {
+			log.Errorf("eth client dial err : %v", err)
+			return
+		}
+		receipt, err := client.TransactionReceipt(context.Background(), common.HexToHash(tx.TxHash))
+		if err != nil {
+			log.Errorf("query tx receipt status err : %v", err)
+			return
+		}
+		var txStatus int
+		txStatus = constant.TXSUCCESS
+		if receipt.Status == 0 {
+			txStatus = constant.TXFAILED
+		}
+		err = cm.UpdateTxStatus(tx.TxHash, txStatus, tx.PayTime)
+		if err != nil {
+			log.Errorf("update tx status err : %v", err)
+			return
+		}
+		err = executeCb(tx.Cb)
+		if err != nil {
+			log.Errorf("execute cb order id : %s ,err : %v", tx.OrderId, err)
+			return
+		}
+		err = cm.UpdateTxNotifyStatus(tx.OrderId, constant.NOTIFIED)
+		if err != nil {
+			log.Errorf("update tx notify status : %s ,err : %v", tx.OrderId, err)
 		}
 	}
 }
