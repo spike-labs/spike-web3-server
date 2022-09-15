@@ -20,8 +20,8 @@ address = "192.168.31.244:6380"
 password = ""
 
 [chain]
-wsNodeAddress = "wss://ws-nd-513-001-835.p2pify.com/16ead84fd5bde769914b64a03ecde444"
-rpcNodeAddress = "https://nd-513-001-835.p2pify.com/16ead84fd5bde769914b64a03ecde444"
+wsNodeAddress = "wss://ws-nd-993-044-630.p2pify.com/7745996240a260d47f935a33021aeddf"
+rpcNodeAddress = "https://nd-993-044-630.p2pify.com/7745996240a260d47f935a33021aeddf"
 
 [mysql]
 path = "192.168.31.244"
