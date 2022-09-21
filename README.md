@@ -12,9 +12,9 @@ go mod tidy
 ```
 3. Install swagger
 ```shell
-go get -u github.com/swaggo/swag/cmd/swag
-swag -v
+go install github.com/swaggo/swag/cmd/swag
 sudo mv $GOPATH/bin/swag /usr/local/bin
+swag -v
 ```
 if you want to update swagger doc, please execute :
 ```shell
@@ -32,14 +32,14 @@ Specify the path to the binary
 ```markdown
 [Service] 
 ExecStart=/root/go/src/github.com/spike-engine/spike-frame-server/spike-frame-server
-Environment=CONFIG_PATH=/etc/config.toml
+Environment=CONFIG_PATH=/etc/spike-config.toml
 Restart=always
 RestartSec=5 
 ```
 ```shell
 systemctl daemon-reload
 systemctl start spike-frame-server.service
-journalctl -u chain-server.service -f
+journalctl -u spike-frame-server.service -f
 ```
 Of course, you can click the build icon in your IDE to run the project instead of startup script.
 But, we recommend using system script in mainnet.
