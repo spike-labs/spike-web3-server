@@ -32,7 +32,7 @@ Specify the path to the binary
 ```markdown
 [Service] 
 ExecStart=/root/go/src/github.com/spike-engine/spike-frame-server/spike-frame-server
-Environment=CONFIG_PATH=/etc/spike-config.toml
+Environment=SPIKE_CONFIG_PATH=/etc/spike-config.toml
 Restart=always
 RestartSec=5 
 ```
