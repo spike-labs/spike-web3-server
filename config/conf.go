@@ -9,37 +9,32 @@ var log = logger.Logger("config")
 var Cfg Config
 
 type Config struct {
-	System      System       `json:"system" toml:"system"`
-	Moralis     Moralis      `json:"moralis" toml:"moralis"`
-	BscScan     BscScan      `json:"bscscan" toml:"bscscan"`
-	Contract    Contract     `json:"contract" toml:"contract"`
-	Redis       Redis        `json:"redis" toml:"redis"`
-	Chain       Chain        `json:"chain" toml:"chain"`
-	Mysql       Mysql        `json:"mysql" toml:"mysql"`
-	SignService SignService  `json:"signService" toml:"signService"`
-	SignWorkers []SignWorker `json:"signWorkers" toml:"signWorkers"`
-	Model       Model        `json:"model" toml:"model"`
-	Limit       Limit        `json:"limit" toml:"limit"`
-}
-
-type Model struct {
-	Name []string `json:"name" toml:"name"`
+	System      System       `json:"system" toml:"System"`
+	Moralis     Moralis      `json:"moralis" toml:"Moralis"`
+	BscScan     BscScan      `json:"bscscan" toml:"Bscscan"`
+	Contract    Contract     `json:"contract" toml:"Contract"`
+	Redis       Redis        `json:"redis" toml:"Redis"`
+	Chain       Chain        `json:"chain" toml:"Chain"`
+	Mysql       Mysql        `json:"mysql" toml:"Mysql"`
+	SignService SignService  `json:"signService" toml:"SignService"`
+	SignWorkers []SignWorker `json:"signWorkers" toml:"SignWorkers"`
+	Limit       Limit        `json:"limit" toml:"Limit"`
 }
 
 type Limit struct {
-	NftLimit      int `json:"nftLimit" toml:"nftLimit"`
-	TxRecordLimit int `json:"txRecordLimit" toml:"txRecordLimit"`
+	NftLimit      int `json:"nftLimit" toml:"NftLimit"`
+	TxRecordLimit int `json:"txRecordLimit" toml:"TxRecordLimit"`
 }
 
 type Mysql struct {
-	Path         string `json:"path" toml:"path"`
-	Port         string `json:"port" toml:"port"`
-	Config       string `json:"config" toml:"config"`
-	Dbname       string `json:"db_name" toml:"dbName"`
-	Username     string `json:"username" toml:"username"`
-	Password     string `json:"password" toml:"password"`
-	MaxIdleConns int    `json:"maxIdleConns" toml:"maxIdleConns"`
-	MaxOpenConns int    `json:"maxOpenConns" toml:"maxOpenConns"`
+	Path         string `json:"path" toml:"Path"`
+	Port         string `json:"port" toml:"Port"`
+	Config       string `json:"config" toml:"Config"`
+	Dbname       string `json:"db_name" toml:"DbName"`
+	Username     string `json:"username" toml:"Username"`
+	Password     string `json:"password" toml:"Password"`
+	MaxIdleConns int    `json:"maxIdleConns" toml:"MaxIdleConns"`
+	MaxOpenConns int    `json:"maxOpenConns" toml:"MaxOpenConns"`
 }
 
 func (m *Mysql) Dsn() string {
@@ -47,41 +42,41 @@ func (m *Mysql) Dsn() string {
 }
 
 type Chain struct {
-	WsNodeAddress  string `toml:"wsNodeAddress"`
-	RpcNodeAddress string `toml:"rpcNodeAddress"`
+	WsNodeAddress  string `toml:"WsNodeAddress"`
+	RpcNodeAddress string `toml:"RpcNodeAddress"`
 }
 
 type System struct {
-	Port      string `toml:"port"`
-	MachineId string `toml:"machineId"`
+	Port      string `toml:"Port"`
+	MachineId string `toml:"MachineId"`
 }
 
 type Moralis struct {
-	XApiKey string `toml:"xApiKey"`
+	XApiKey string `toml:"XApiKey"`
 }
 
 type BscScan struct {
-	ApiKey    string `toml:"apiKey"`
-	UrlPrefix string `toml:"urlPrefix"`
+	ApiKey    string `toml:"ApiKey"`
+	UrlPrefix string `toml:"UrlPrefix"`
 }
 
 type Redis struct {
-	Address  string `toml:"address"`
-	Password string `toml:"password"`
+	Address  string `toml:"Address"`
+	Password string `toml:"Password"`
 }
 
 type Contract struct {
-	NftContractAddress   []string `toml:"nft_contract"`
-	ERC20ContractAddress []string `toml:"erc20_contract"`
-	GameVaultAddress     string   `toml:"game_vault_address"`
+	NftContractAddress   []string `toml:"NftContract"`
+	ERC20ContractAddress []string `toml:"ERC20Contract"`
+	GameVaultAddress     string   `toml:"GameVaultAddress"`
 }
 
 type SignService struct {
-	TaskThreshold int `toml:"taskThreshold"`
-	SchedInterval int `toml:"schedInterval"`
+	TaskThreshold int `toml:"TaskThreshold"`
+	SchedInterval int `toml:"SchedInterval"`
 }
 
 type SignWorker struct {
-	WalletAddress string `toml:"walletAddress"`
-	ServerUrl     string `toml:"serverUrl"`
+	WalletAddress string `toml:"WalletAddress"`
+	ServerUrl     string `toml:"ServerUrl"`
 }

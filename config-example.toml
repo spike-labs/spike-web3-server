@@ -1,50 +1,50 @@
-[system]
-port = ":3000"
-machineId = "1"
+[System]
+Port = ":3000"
+MachineId = "1"
 
-[moralis]
-xApiKey = "xxx"
+[Moralis]
+XApiKey = "xx"
 
-[bscscan]
-apiKey = "xxx"
-urlPrefix = "https://api-testnet.bscscan.com/api"
+[Bscscan]
+ApiKey = "xx"
+UrlPrefix = "https://api-testnet.bscscan.com/api"
 
-[contract]
-erc20_contract=["xxx","xxx","xxx"]
-nft_contract=["xx"]
-game_vault_address = "xx"
+[Contract]
+ERC20Contract=["xx","xx","xx"]
+NftContract=["xx"]
+GameVaultAddress = "xx"
 
 
-[redis]
-address = "xx"
-password = ""
+[Redis]
+Address = "xx"
+Password = "xx"
 
-[chain]
-wsNodeAddress = "xx"
-rpcNodeAddress = "xx"
+[Chain]
+WsNodeAddress = "xx"
+RpcNodeAddress = "xx"
 
-[mysql]
-path = "xxx"
-port = "3306"
-dbName = "spike-web3-server"
-username = "root"
-password = "xxx"
-maxIdleConns = 0
-maxOpenConns = 0
+[Mysql]
+Path = "xx"
+Port = "3309"
+DbName = "spike_web3_server"
+Username = "root"
+Password = "123456"
+MaxIdleConns = 0
+MaxOpenConns = 0
 
-[signService]
-taskThreshold = 20
-schedInterval = 1
+[SignService]
+TaskThreshold = 1000
+SchedInterval = 1
 
-[[signWorkers]]
-walletAddress = "xx"
-serverUrl = "xx"
+[[SignWorkers]]
+WalletAddress = "xx"
+ServerUrl = "xx"
 
-[[signWorkers]]
-walletAddress = "xxx"
-serverUrl = "xx"
+[[SignWorkers]]
+WalletAddress = "xx"
+ServerUrl = "xx"
 
-[limit]
-nftLimit = 12
-txRecordLimit = 12
+[Limit]
+NftLimit = 12
+TxRecordLimit = 12
 
