@@ -1,10 +1,10 @@
 package txService
 
 import (
-	"spike-frame/config"
-	"spike-frame/global"
-	"spike-frame/model"
-	"spike-frame/request"
+	"github.com/spike-engine/spike-web3-server/config"
+	"github.com/spike-engine/spike-web3-server/global"
+	"github.com/spike-engine/spike-web3-server/model"
+	"github.com/spike-engine/spike-web3-server/request"
 	"time"
 )
 

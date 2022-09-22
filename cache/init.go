@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/go-redis/redis/v8"
 	logger "github.com/ipfs/go-log"
-	"spike-frame/config"
+	"github.com/spike-engine/spike-web3-server/config"
 )
 
 var log = logger.Logger("cache")

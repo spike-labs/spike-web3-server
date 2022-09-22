@@ -2,8 +2,8 @@ package cache
 
 import (
 	"github.com/go-redis/redis/v8"
-	"spike-frame/constant"
-	"spike-frame/util"
+	"github.com/spike-engine/spike-web3-server/constant"
+	"github.com/spike-engine/spike-web3-server/util"
 )
 
 type ClearEvent struct {

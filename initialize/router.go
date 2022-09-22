@@ -3,11 +3,11 @@ package initialize
 import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/ipfs/go-log"
+	v1 "github.com/spike-engine/spike-web3-server/api/v1"
+	_ "github.com/spike-engine/spike-web3-server/docs"
+	"github.com/spike-engine/spike-web3-server/middleware"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	v1 "spike-frame/api/v1"
-	_ "spike-frame/docs"
-	"spike-frame/middleware"
 )
 
 var log = logger.Logger("initialize")

@@ -8,11 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"math/big"
-	"spike-frame/cache"
-	chain "spike-frame/chain/abi"
-	"spike-frame/game"
-	"spike-frame/global"
-	"spike-frame/util"
+	"github.com/spike-engine/spike-web3-server/cache"
+	chain "github.com/spike-engine/spike-web3-server/chain/abi"
+	"github.com/spike-engine/spike-web3-server/game"
+	"github.com/spike-engine/spike-web3-server/global"
+	"github.com/spike-engine/spike-web3-server/util"
 	"sync"
 )
 

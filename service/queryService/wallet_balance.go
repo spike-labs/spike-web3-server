@@ -5,10 +5,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/xerrors"
-	"spike-frame/chain/contract"
-	"spike-frame/config"
-	"spike-frame/response"
-	"spike-frame/util"
+	"github.com/spike-engine/spike-web3-server/chain/contract"
+	"github.com/spike-engine/spike-web3-server/config"
+	"github.com/spike-engine/spike-web3-server/response"
+	"github.com/spike-engine/spike-web3-server/util"
 	"sync"
 )
 

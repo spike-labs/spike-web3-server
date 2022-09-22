@@ -6,10 +6,10 @@ import (
 	"github.com/go-resty/resty/v2"
 	logger "github.com/ipfs/go-log"
 	"golang.org/x/xerrors"
-	"spike-frame/config"
-	"spike-frame/constant"
-	"spike-frame/response"
-	"spike-frame/util"
+	"github.com/spike-engine/spike-web3-server/config"
+	"github.com/spike-engine/spike-web3-server/constant"
+	"github.com/spike-engine/spike-web3-server/response"
+	"github.com/spike-engine/spike-web3-server/util"
 )
 
 var log = logger.Logger("service")

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"golang.org/x/xerrors"
-	"spike-frame/config"
-	"spike-frame/model"
-	"spike-frame/util"
+	"github.com/spike-engine/spike-web3-server/config"
+	"github.com/spike-engine/spike-web3-server/model"
+	"github.com/spike-engine/spike-web3-server/util"
 	"sync"
 	"time"
 )
