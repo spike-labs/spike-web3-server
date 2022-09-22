@@ -32,7 +32,7 @@ go mod tidy
 ```shell
 go get -u github.com/swaggo/swag/cmd/swag
 go install github.com/swaggo/swag/cmd/swag
-sudo mv $GOPATH/bin/swag /usr/local/bin
+sudo mv $(go env GOPATH)/bin/swag /usr/local/bin
 swag -v
 ```
 if you want to update swagger doc, please execute :
