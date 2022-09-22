@@ -1,19 +1,3 @@
-/*
- Navicat Premium Data Transfer
-
- Source Server         : mysql_1
- Source Server Type    : MySQL
- Source Server Version : 80027
- Source Host           : localhost:3309
- Source Schema         : spike_frame_server
-
- Target Server Type    : MySQL
- Target Server Version : 80027
- File Encoding         : 65001
-
- Date: 15/09/2022 17:05:08
-*/
-
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 

@@ -26,7 +26,7 @@ rpcNodeAddress = "xx"
 [mysql]
 path = "xxx"
 port = "3306"
-dbName = "spike_frame_server"
+dbName = "spike-web3-server"
 username = "root"
 password = "xxx"
 maxIdleConns = 0
