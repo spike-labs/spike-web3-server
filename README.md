@@ -1,10 +1,28 @@
-## spike-frame-server 
+## spike-web3-server quick start
 
-### Build and install spike-frame-server
+### Prequisition
+#### SDK
+1. Go
+https://go.dev/
+2. Morails
+https://moralis.io/
+3. bscscan
+https://bscscan.com/
+4. Redis
+https://redis.io/
+5. MySQL
+https://www.mysql.com/
+#### Services
+1. Signature
+https://github.com/spike-engine/spike-signature-server
+
+
+### Build and install spike-web3-server
+
 1. Clone the repository
 ```shell
-git clone https://github.com/spike-engine/spike-frame-server.git
-cd spike-frame-server/
+git clone https://github.com/spike-engine/spike-web3-server.git
+cd spike-web3-server/
 ```
 2. Install all the dependencies
 ```shell
@@ -22,33 +40,43 @@ swag init
 ```
 4. Make build
 ```shell
-go build -o spike-frame-server ./main.go
+go build -o spike-web3-server ./main.go
 ```
-5. Startup script
+5. Update Config
 ```shell
-vim /etc/systemd/system/spike-frame-server.service
+cp config-example.toml config.toml
+```
+6. Run
+```
+./spike-web3-server
+```
+
+### Register spike as a system service
+Startup script
+```shell
+vim /etc/systemd/system/spike-web3-server.service
 ```
 Specify the path to the binary
 ```markdown
 [Service] 
-ExecStart=/root/go/src/github.com/spike-engine/spike-frame-server/spike-frame-server
-Environment=SPIKE_CONFIG_PATH=/etc/spike-config.toml
+ExecStart=PATH-TO-SPIKE-WEB3-SERVER/spike-web3-server
+Environment=SPIKE_CONFIG_PATH=/etc/spike/config.toml
 Restart=always
 RestartSec=5 
 ```
 ```shell
 systemctl daemon-reload
-systemctl start spike-frame-server.service
-journalctl -u spike-frame-server.service -f
+systemctl start spike-web3-server.service
+journalctl -u spike-web3-server.service -f
 ```
-Of course, you can click the build icon in your IDE to run the project instead of startup script.
-But, we recommend using system script in mainnet.
 
 ### config
-If you don't specify the path to the configuration file in the environment variable in the startup script, 
-config.toml is the default.And config-example.toml is a demo.
-
-You should configure some information about system port, mysql , redis, contract address etc.
+By default, spike-web3-server reads configuration from config.toml under the current folder. 
+If it is not created, you may copy from config-example.config.
+If you need to specifiy the config file, you may set the enviornment as follows:
+```
+export SPIKE_CONFIG_PATH=~/spike_home/config.toml
+```
 
 ### swagger
 If you run the project successfully, you can visit http://localhost:3000/swagger/index.html.
