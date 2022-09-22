@@ -2,18 +2,18 @@
 
 ### Prequisition
 #### SDK
-1. Go
+1. Go.  
 https://go.dev/
-2. Morails
+2. Morails.  
 https://moralis.io/
-3. bscscan
+3. bscscan.  
 https://bscscan.com/
-4. Redis
+4. Redis.  
 https://redis.io/
-5. MySQL
+5. MySQL.  
 https://www.mysql.com/
 #### Services
-1. Signature
+1. Signature.  
 https://github.com/spike-engine/spike-signature-server
 
 
@@ -30,6 +30,7 @@ go mod tidy
 ```
 3. Install swagger
 ```shell
+go get -u github.com/swaggo/swag/cmd/swag
 go install github.com/swaggo/swag/cmd/swag
 sudo mv $GOPATH/bin/swag /usr/local/bin
 swag -v
