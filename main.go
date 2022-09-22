@@ -2,12 +2,12 @@ package main
 
 import (
 	logger "github.com/ipfs/go-log"
-	"spike-frame/cache"
-	"spike-frame/chain"
-	"spike-frame/config"
-	"spike-frame/dao"
-	"spike-frame/global"
-	"spike-frame/initialize"
+	"github.com/spike-engine/spike-web3-server/cache"
+	"github.com/spike-engine/spike-web3-server/chain"
+	"github.com/spike-engine/spike-web3-server/config"
+	"github.com/spike-engine/spike-web3-server/dao"
+	"github.com/spike-engine/spike-web3-server/global"
+	"github.com/spike-engine/spike-web3-server/initialize"
 )
 
 func main() {

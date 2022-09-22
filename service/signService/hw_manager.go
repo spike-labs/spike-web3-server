@@ -6,13 +6,13 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	logger "github.com/ipfs/go-log"
-	"spike-frame/config"
-	"spike-frame/constant"
-	"spike-frame/game"
-	"spike-frame/global"
-	"spike-frame/model"
-	"spike-frame/request"
-	"spike-frame/util"
+	"github.com/spike-engine/spike-web3-server/config"
+	"github.com/spike-engine/spike-web3-server/constant"
+	"github.com/spike-engine/spike-web3-server/game"
+	"github.com/spike-engine/spike-web3-server/global"
+	"github.com/spike-engine/spike-web3-server/model"
+	"github.com/spike-engine/spike-web3-server/request"
+	"github.com/spike-engine/spike-web3-server/util"
 	"sync"
 	"time"
 )
@@ -142,11 +142,11 @@ func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService
 	}
 
 	err := w.gorm.SaveTxCb(model.SpikeTx{
-		OrderId:         service.OrderId,
-		Uuid:            req.Uuid,
-		From:            config.Cfg.Contract.GameVaultAddress,
-		To:              service.ToAddress,
-		Cb:              service.Cb,
+		OrderId: service.OrderId,
+		Uuid:    req.Uuid,
+		From:    config.Cfg.Contract.GameVaultAddress,
+		To:      service.ToAddress,
+		Cb:      service.Cb,
 		ContractAddress: service.ContractAddress,
 		CreateTime:      time.Now().UnixMilli(),
 		TokenId:         service.TokenID,

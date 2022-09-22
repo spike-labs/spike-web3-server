@@ -1,6 +1,6 @@
 package game
 
-import "spike-frame/model"
+import "github.com/spike-engine/spike-web3-server/model"
 
 type TxTracker interface {
 	SaveTxCb(tx model.SpikeTx) error

@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	logger "github.com/ipfs/go-log"
-	_ "spike-frame/docs"
-	"spike-frame/request"
-	"spike-frame/response"
-	"spike-frame/service/queryService"
+	_ "github.com/spike-engine/spike-web3-server/docs"
+	"github.com/spike-engine/spike-web3-server/request"
+	"github.com/spike-engine/spike-web3-server/response"
+	"github.com/spike-engine/spike-web3-server/service/queryService"
 	"time"
 )
 

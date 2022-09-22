@@ -3,7 +3,7 @@ package dao
 import (
 	logger "github.com/ipfs/go-log"
 	"gorm.io/gorm"
-	"spike-frame/model"
+	"github.com/spike-engine/spike-web3-server/model"
 )
 
 var log = logger.Logger("dao")

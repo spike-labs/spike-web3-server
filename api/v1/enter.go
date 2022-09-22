@@ -2,8 +2,8 @@ package v1
 
 import (
 	logger "github.com/ipfs/go-log"
-	"spike-frame/api/v1/queryApi"
-	"spike-frame/api/v1/txApi"
+	"github.com/spike-engine/spike-web3-server/api/v1/queryApi"
+	"github.com/spike-engine/spike-web3-server/api/v1/txApi"
 )
 
 var log = logger.Logger("api")

@@ -3,7 +3,7 @@ package initialize
 import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"spike-frame/config"
+	"github.com/spike-engine/spike-web3-server/config"
 )
 
 func GormMysql() *gorm.DB {

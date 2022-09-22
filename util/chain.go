@@ -3,7 +3,7 @@ package util
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"spike-frame/config"
+	"github.com/spike-engine/spike-web3-server/config"
 )
 
 func QueryBlockHeight() (uint64, error) {

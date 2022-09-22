@@ -2,11 +2,11 @@ package signService
 
 import (
 	"sort"
-	"spike-frame/config"
-	"spike-frame/constant"
-	"spike-frame/game"
-	"spike-frame/global"
-	"spike-frame/model"
+	"github.com/spike-engine/spike-web3-server/config"
+	"github.com/spike-engine/spike-web3-server/constant"
+	"github.com/spike-engine/spike-web3-server/game"
+	"github.com/spike-engine/spike-web3-server/global"
+	"github.com/spike-engine/spike-web3-server/model"
 	"sync"
 	"time"
 )
