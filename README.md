@@ -71,14 +71,23 @@ systemctl start spike-web3-server.service
 journalctl -u spike-web3-server.service -f
 ```
 
-### config
+### Config
 By default, spike-web3-server reads configuration from config.toml under the current folder. 
 If it is not created, you may copy from config-example.config.
-If you need to specifiy the config file, you may set the enviornment as follows:
+If you need to specify the config file, you may set the enviornment as follows:
 ```
 export SPIKE_CONFIG_PATH=~/spike_home/config.toml
 ```
 
-### swagger
+### Database
+```shell
+# create database, replace 'spike_web3_server' with DbName config
+mysql -u root -p <sql/create-db.sql
+
+# create tables
+mysql -u root -p spike_web3_server < sql/create-tables.sql
+```
+
+### Swagger
 If you run the project successfully, you can visit http://localhost:3000/swagger/index.html.
 And you can see some interface information.
