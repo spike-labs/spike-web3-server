@@ -13,7 +13,7 @@ https://redis.io/
 5. MySQL.  
 https://www.mysql.com/
 #### Services
-1. Signature.  
+1. Signature Service.  
 https://github.com/spike-engine/spike-signature-server
 
 
