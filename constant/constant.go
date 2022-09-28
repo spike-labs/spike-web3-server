@@ -2,7 +2,7 @@ package constant
 
 const (
 	ConfigFile          = "config.toml"
-	ConfigEnv           = "SPIKE_CONFIG_PATH"
+	ConfigEnv           = "SPIKE_WEB3_CONFIG"
 	PROTOCOL            = "https"
 	DOMAIN              = "deep-index.moralis.io"
 	MORALIS_API_VERSION = "api/v2"
@@ -12,7 +12,7 @@ const (
 	EmptyAddress        = "0x0000000000000000000000000000000000000000"
 )
 
-//txType
+// txType
 const (
 	GAMETOKEN_RECHARGE = iota + 1
 	GOVERNANCETOKEN_RECHARGE
@@ -27,7 +27,7 @@ const (
 	NOT_EXIST
 )
 
-//txStatus
+// txStatus
 const (
 	ORDERCREATED = iota
 	ORDERHANDLED
@@ -35,7 +35,7 @@ const (
 	TXSUCCESS
 )
 
-//tx notify
+// tx notify
 const (
 	NOTNOTIFIED = iota
 	NOTIFIED
@@ -48,7 +48,7 @@ const (
 	NONCE        = "nonce"
 )
 
-//tx redis key
+// tx redis key
 const (
 	NFTTAG               = "nft"
 	NFTLISTSUFFIX        = "nft" + "list"
