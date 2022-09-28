@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"math/big"
 	"github.com/spike-engine/spike-web3-server/cache"
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
 	"github.com/spike-engine/spike-web3-server/config"
@@ -15,6 +14,7 @@ import (
 	"github.com/spike-engine/spike-web3-server/game"
 	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/util"
+	"math/big"
 	"strings"
 	"sync"
 )

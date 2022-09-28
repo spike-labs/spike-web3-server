@@ -7,12 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"math/big"
 	"github.com/spike-engine/spike-web3-server/cache"
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
 	"github.com/spike-engine/spike-web3-server/game"
 	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/util"
+	"math/big"
 	"sync"
 )
 
@@ -59,6 +59,7 @@ func newERC721Listener(contractAddr string, ec *ethclient.Client, newBlockNotify
 	}
 	e.AttachObserver(cache.NewManager(global.RedisClient))
 	e.AttachObserver(game.NewCbManager(global.DbAccessor))
+	e.AttachObserver(game.NewNftManager(global.DbAccessor))
 	return e
 }
 
@@ -123,6 +124,7 @@ func (el *ERC721Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) err
 
 			go el.Notify(cache.ClearEvent{FromAddr: fromAddr, ToAddr: toAddr})
 			go el.Notify(game.NotifyEvent{TxHash: logEvent.TxHash.Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
+			go el.Notify(game.NftOwnerUpdateEvent{OwnerAddr: toAddr, ContractAddr: el.contractAddr, TokenId: logEvent.Topics[3].Big().Int64(), UpdateTime: int64(block.Time())})
 		}
 	}
 	return nil

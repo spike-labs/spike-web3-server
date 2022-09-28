@@ -23,8 +23,8 @@ const (
 )
 
 var (
-	CbMgr *CbManager
-	once  sync.Once
+	CbMgr     *CbManager
+	cbMgrOnce sync.Once
 )
 
 type CbManager struct {
@@ -38,7 +38,7 @@ type NotifyEvent struct {
 }
 
 func NewCbManager(tracker TxTracker) *CbManager {
-	once.Do(func() {
+	cbMgrOnce.Do(func() {
 		CbMgr = &CbManager{tracker}
 	})
 	return CbMgr
@@ -95,7 +95,7 @@ func (cm *CbManager) Run() {
 		case <-ticker.C:
 			txs, err := cm.QueryNotNotifyTx(constant.NOTNOTIFIED)
 			if err != nil {
-				log.Errorf("query not notify tx err : %v", err)
+				log.Infof("query not notify tx err : %v", err)
 				break
 			}
 			for _, tx := range txs {

@@ -1,12 +1,12 @@
 package signService
 
 import (
-	"sort"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
 	"github.com/spike-engine/spike-web3-server/game"
 	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/model"
+	"sort"
 	"sync"
 	"time"
 )

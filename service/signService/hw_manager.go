@@ -142,11 +142,11 @@ func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService
 	}
 
 	err := w.gorm.SaveTxCb(model.SpikeTx{
-		OrderId: service.OrderId,
-		Uuid:    req.Uuid,
-		From:    config.Cfg.Contract.GameVaultAddress,
-		To:      service.ToAddress,
-		Cb:      service.Cb,
+		OrderId:         service.OrderId,
+		Uuid:            req.Uuid,
+		From:            config.Cfg.Contract.GameVaultAddress,
+		To:              service.ToAddress,
+		Cb:              service.Cb,
 		ContractAddress: service.ContractAddress,
 		CreateTime:      time.Now().UnixMilli(),
 		TokenId:         service.TokenID,

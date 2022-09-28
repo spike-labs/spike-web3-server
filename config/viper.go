@@ -5,8 +5,8 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"os"
 	"github.com/spike-engine/spike-web3-server/constant"
+	"os"
 )
 
 func InitViper() *viper.Viper {

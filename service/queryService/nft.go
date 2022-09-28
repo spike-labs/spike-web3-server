@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	logger "github.com/ipfs/go-log"
-	"golang.org/x/xerrors"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
 	"github.com/spike-engine/spike-web3-server/response"
 	"github.com/spike-engine/spike-web3-server/util"
+	"golang.org/x/xerrors"
 )
 
 var log = logger.Logger("service")
