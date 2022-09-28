@@ -4,11 +4,11 @@ import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"golang.org/x/xerrors"
 	"github.com/spike-engine/spike-web3-server/chain/contract"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/response"
 	"github.com/spike-engine/spike-web3-server/util"
+	"golang.org/x/xerrors"
 	"sync"
 )
 

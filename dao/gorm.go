@@ -2,8 +2,8 @@ package dao
 
 import (
 	logger "github.com/ipfs/go-log"
-	"gorm.io/gorm"
 	"github.com/spike-engine/spike-web3-server/model"
+	"gorm.io/gorm"
 )
 
 var log = logger.Logger("dao")
@@ -56,4 +56,31 @@ func (g *GormAccessor) QueryNotNotifyTx(notNotifyStatus int) ([]model.SpikeTx, e
 		return spikeTxs, err
 	}
 	return spikeTxs, nil
+}
+
+func (g *GormAccessor) QueryNftList(ownerAddr string, contractAddr string) ([]model.NftOwner, error) {
+	var nftList []model.NftOwner
+	if err := g.DB.Select("id", "owner_address", "contract_address", "token_id").Where("owner_address = ? and contract_address = ?", ownerAddr, contractAddr).Find(&nftList).Error; err != nil {
+		return nftList, err
+	}
+	return nftList, nil
+}
+
+func (g *GormAccessor) AddNftOwner(no model.NftOwner) error {
+	return g.DB.Create(&no).Error
+}
+
+func (g *GormAccessor) UpdateNftOwner(ownerAddr string, contractAddr string, tokenId int64, updateTime int64) error {
+	return g.DB.Model(model.NftOwner{}).Where("contract_address = ? and token_id = ?", contractAddr, tokenId).Updates(model.NftOwner{
+		UpdateTime:   updateTime,
+		OwnerAddress: ownerAddr,
+	}).Error
+}
+
+func (g *GormAccessor) QueryNftOwner(tokenId int64, contractAddr string) ([]model.NftOwner, error) {
+	var nftOwner []model.NftOwner
+	if err := g.DB.Select("id", "owner_address, update_time").Where("token_id = ? and contract_address = ?", tokenId, contractAddr).Find(&nftOwner).Error; err != nil {
+		return nftOwner, err
+	}
+	return nftOwner, nil
 }

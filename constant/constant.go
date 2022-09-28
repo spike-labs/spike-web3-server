@@ -55,6 +55,5 @@ const (
 	NFTTYPESUFFIX        = "nft" + "type"
 	NATIVETXRECORDSUFFIX = "native" + "txRecord"
 	ERC20TXRECORDSUFFIX  = "erc20" + "txRecord"
-	TXCBKEY              = "tx_cb_lock_key"
 	TXCBVALUE            = 1
 )
