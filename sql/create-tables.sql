@@ -23,3 +23,26 @@ CREATE TABLE `order` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+
+-- ----------------------------
+-- Table structure for nft_owner
+-- ----------------------------
+DROP TABLE IF EXISTS `nft_owner`;
+CREATE TABLE `nft_owner` (
+    `id` varchar(200) NOT NULL,
+    `owner_address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+    `contract_address` varchar(255) NOT NULL,
+    `token_id` bigint NOT NULL,
+    `update_time` bigint NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+
