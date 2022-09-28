@@ -1,50 +1,51 @@
 [System]
-Port = ":3000"
+Port = ":3200"
+# multiple services instances use different MachineId
 MachineId = "1"
 
-[Moralis]
-XApiKey = "xx"
-
 [Bscscan]
-ApiKey = "xx"
+# Appy API key from, https://docs.bscscan.com/getting-started/viewing-api-usage-statistics
+ApiKey = "YOUR_BSCSCAN_API_KEY"
 UrlPrefix = "https://api-testnet.bscscan.com/api"
 
 [Contract]
-ERC20Contract=["xx","xx","xx"]
-NftContract=["xx"]
-GameVaultAddress = "xx"
-
+ERC20Contract=["0x9F3Ea38046F76B14A35DC241E5EaB3baaE7B7A0F","0xCb8DAD63dD2cE2832AcFB2F7f4AC1f67d698FB46"]
+NftContract=["0xe9d2c4F6a015bF853b78eB40DB85E923C64fDC06"]
+GameVaultAddress = "0x1DCC916e3aF5fd20E349A925956FeAc797Db98C1"
 
 [Redis]
-Address = "xx"
-Password = "xx"
+Address = "127.0.0.1:6379"
+Password = "YOUR_REDIS_PASSOWRD"
 
+# Node websocket and RPC services, recommend chainstack.
+# https://docs.chainstack.com/platform/create-an-api-key
 [Chain]
-WsNodeAddress = "xx"
-RpcNodeAddress = "xx"
+WsNodeAddress = "wss://ws-nd-993-044-630.p2pify.com/********************************"
+RpcNodeAddress = "https://nd-993-044-630.p2pify.com/********************************"
 
 [Mysql]
-Path = "xx"
-Port = "3309"
+Path = "127.0.0.1"
+Port = "3306"
 DbName = "spike_web3_server"
 Username = "root"
-Password = "123456"
+Password = "YOUR_MYSQL_PASSWORD"
 MaxIdleConns = 0
 MaxOpenConns = 0
 
+# see details from, https://github.com/spike-engine/spike-signature-server
 [SignService]
 TaskThreshold = 1000
 SchedInterval = 1
 
 [[SignWorkers]]
-WalletAddress = "xx"
-ServerUrl = "xx"
+WalletAddress = "0x1111111111111111111111111111111111111111"
+ServerUrl = "http://SIGNATURE_SERVER_2:3100/tx-api/v1/tx/signature"
 
 [[SignWorkers]]
-WalletAddress = "xx"
-ServerUrl = "xx"
+WalletAddress = "0x2222222222222222222222222222222222222222"
+ServerUrl = "http://SIGNATURE_SERVER_2:3100/tx-api/v1/tx/signature"
 
+# Requset rates, unit is requests/second
 [Limit]
 NftLimit = 12
 TxRecordLimit = 12
-

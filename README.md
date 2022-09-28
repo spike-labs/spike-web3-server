@@ -12,10 +12,12 @@ https://bscscan.com/
 https://redis.io/
 5. MySQL.  
 https://www.mysql.com/
+6. ChainStack.  
+   https://chainstack.com/
+
 #### Services
 1. Signature Service.  
 https://github.com/spike-engine/spike-signature-server
-
 
 ### Build and install spike-web3-server
 
@@ -53,22 +55,31 @@ cp config-example.toml config.toml
 ```
 
 ### Register spike as a system service
-Startup script
+1. Link server into system binary path
 ```shell
-vim /etc/systemd/system/spike-web3-server.service
+sudo ln ./spike-web3-server /usr/local/bin
+```
+2. Copy config file into spike home
+```shell
+sudo mkdir -p /etc/spike/
+sudo cp ./config.toml /etc/spike/config-web3.toml
+```
+3. Startup script
+```shell
+sudo vim /etc/systemd/system/spike-web3-server.service
 ```
 Specify the path to the binary
 ```markdown
 [Service] 
-ExecStart=PATH-TO-SPIKE-WEB3-SERVER/spike-web3-server
-Environment=SPIKE_CONFIG_PATH=/etc/spike/config.toml
+ExecStart=/usr/local/bin/spike-web3-server
+Environment=SPIKE_WEB3_CONFIG=/etc/spike/config.toml
 Restart=always
 RestartSec=5 
 ```
 ```shell
-systemctl daemon-reload
-systemctl start spike-web3-server.service
-journalctl -u spike-web3-server.service -f
+sudo systemctl daemon-reload
+sudo systemctl start spike-web3-server.service
+sudo journalctl -u spike-web3-server.service -f
 ```
 
 ### Config
@@ -76,7 +87,7 @@ By default, spike-web3-server reads configuration from config.toml under the cur
 If it is not created, you may copy from config-example.config.
 If you need to specify the config file, you may set the enviornment as follows:
 ```
-export SPIKE_CONFIG_PATH=~/spike_home/config.toml
+export SPIKE_WEB3_CONFIG=~/spike_home/config-web3.toml
 ```
 
 ### Database
