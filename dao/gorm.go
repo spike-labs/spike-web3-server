@@ -84,3 +84,15 @@ func (g *GormAccessor) QueryNftOwner(tokenId int64, contractAddr string) ([]mode
 	}
 	return nftOwner, nil
 }
+
+func (g *GormAccessor) QueryApiKey() ([]model.ApiKey, error) {
+	var apiKey []model.ApiKey
+	if err := g.DB.Select("id", "api_key").Find(&apiKey).Error; err != nil {
+		return apiKey, err
+	}
+	return apiKey, nil
+}
+
+func (g *GormAccessor) AddApiKey(apiKey model.ApiKey) error {
+	return g.DB.Create(&apiKey).Error
+}

@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/ipfs/go-log"
 	_ "github.com/spike-engine/spike-web3-server/docs"
+	"github.com/spike-engine/spike-web3-server/middleware"
 	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/response"
 	"github.com/spike-engine/spike-web3-server/service/queryService"
@@ -29,9 +30,10 @@ func NewQueryApiGroup() QueryGroup {
 }
 
 func (api *QueryGroup) InitQueryGroup(g *gin.RouterGroup) {
-	g.Use()
+	g.Use(middleware.ApiKeyAuth())
 	{
 		g.POST("/balance", api.QueryBalance)
+		g.POST("/nftList", api.NftList)
 	}
 
 	nft := g.Group("/nft")
@@ -44,6 +46,21 @@ func (api *QueryGroup) InitQueryGroup(g *gin.RouterGroup) {
 	{
 		txRecord.POST("/native", api.QueryNativeTxRecord)
 		txRecord.POST("/erc20", api.QueryERC20TxRecord)
+	}
+}
+
+func (api *QueryGroup) NftList(c *gin.Context) {
+	var service request.NftTypeService
+	if err := c.ShouldBind(&service); err == nil {
+		log.Infof("query wallet %s contractAddr %s nft list", service.WalletAddress, service.ContractAddress)
+		result, err := api.manager.NftList(service.ContractAddress, service.WalletAddress)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		response.OkWithData(result, c)
+	} else {
+		response.FailWithMessage("request params error", c)
 	}
 }
 

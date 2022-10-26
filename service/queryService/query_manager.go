@@ -46,6 +46,17 @@ func NewQueryManager() *QueryManager {
 	}
 }
 
+func (qm *QueryManager) NftList(gameContractAddr, walletAddr string) ([]model.CacheData, error) {
+	nftResults := make([]response.NftResult, 0)
+	results, err := QueryWalletNft("", gameContractAddr, walletAddr, qm.network, nftResults)
+	if err != nil {
+		return []model.CacheData{}, err
+	}
+	data := util.ConvertNftResult(gameContractAddr, results)
+	dataList := util.ParseMetadata(data)
+	return dataList, nil
+}
+
 func (qm *QueryManager) QueryNftType(ctx context.Context, gameContractAddr, walletAddr string) ([]response.NftType, error) {
 	value, isNil, err := util.GetStringFromRedis(walletAddr+gameContractAddr+constant.NFTTYPESUFFIX, qm.redisClient)
 	if err != nil {

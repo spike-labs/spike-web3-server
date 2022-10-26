@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	logger "github.com/ipfs/go-log"
 	"github.com/spike-engine/spike-web3-server/config"
+	"github.com/spike-engine/spike-web3-server/global"
 )
 
 var log = logger.Logger("cache")
@@ -25,6 +26,10 @@ func ConnectRedis() *redis.Client {
 		log.Error("redis init err : ", err)
 		panic("redis error")
 		return nil
+	}
+	apiKeyList, err := global.DbAccessor.QueryApiKey()
+	for _, apiKey := range apiKeyList {
+		client.SAdd(context.Background(), "api_key", apiKey.ApiKey)
 	}
 	return client
 }

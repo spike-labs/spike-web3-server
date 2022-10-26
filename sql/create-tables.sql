@@ -44,5 +44,18 @@ CREATE TABLE `nft_owner` (
 
 SET FOREIGN_KEY_CHECKS = 1;
 
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
 
+-- ----------------------------
+-- Table structure for api_key
+-- ----------------------------
+DROP TABLE IF EXISTS `api_key`;
+CREATE TABLE `api_key` (
+    `id` varchar(255) NOT NULL,
+    `api_key` varchar(255) NOT NULL,
+     PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
 

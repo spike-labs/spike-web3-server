@@ -9,16 +9,21 @@ var log = logger.Logger("config")
 var Cfg Config
 
 type Config struct {
-	System      System       `json:"system" toml:"System"`
-	Moralis     Moralis      `json:"moralis" toml:"Moralis"`
-	BscScan     BscScan      `json:"bscscan" toml:"Bscscan"`
-	Contract    Contract     `json:"contract" toml:"Contract"`
-	Redis       Redis        `json:"redis" toml:"Redis"`
-	Chain       Chain        `json:"chain" toml:"Chain"`
-	Mysql       Mysql        `json:"mysql" toml:"Mysql"`
-	SignService SignService  `json:"signService" toml:"SignService"`
-	SignWorkers []SignWorker `json:"signWorkers" toml:"SignWorkers"`
-	Limit       Limit        `json:"limit" toml:"Limit"`
+	System         System         `json:"system" toml:"System"`
+	Moralis        Moralis        `json:"moralis" toml:"Moralis"`
+	BscScan        BscScan        `json:"bscscan" toml:"Bscscan"`
+	Contract       Contract       `json:"contract" toml:"Contract"`
+	Redis          Redis          `json:"redis" toml:"Redis"`
+	Chain          Chain          `json:"chain" toml:"Chain"`
+	Mysql          Mysql          `json:"mysql" toml:"Mysql"`
+	SignService    SignService    `json:"signService" toml:"SignService"`
+	SignWorkers    []SignWorker   `json:"signWorkers" toml:"SignWorkers"`
+	Limit          Limit          `json:"limit" toml:"Limit"`
+	TxApiWhiteList TxApiWhiteList `toml:"TxApiWhiteList"`
+}
+
+type TxApiWhiteList struct {
+	IpList []string `toml:"Ip"`
 }
 
 type Limit struct {

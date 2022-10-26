@@ -3,6 +3,7 @@ package txApi
 import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/ipfs/go-log"
+	"github.com/spike-engine/spike-web3-server/middleware"
 	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/response"
 	"github.com/spike-engine/spike-web3-server/service/signService"
@@ -29,7 +30,7 @@ func NewTxGroup() (TxGroup, error) {
 }
 
 func (txGroup *TxGroup) InitTxGroup(g *gin.RouterGroup) {
-	g.Use()
+	g.Use(middleware.WhiteListAuth())
 	hotWallet := g.Group("hotWallet")
 	{
 		hotWallet.POST("/mint", txGroup.BatchMint)
