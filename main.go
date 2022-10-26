@@ -9,6 +9,13 @@ import (
 	"github.com/spike-engine/spike-web3-server/initialize"
 )
 
+// @title Swagger Example API
+// @version 0.0.1
+// @description
+// @securityDefinitions.api_key api_key
+// @in header
+// @name Authorization
+// @BasePath /
 func main() {
 	logger.SetLogLevel("*", "INFO")
 	global.Viper = config.InitViper()

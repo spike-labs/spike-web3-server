@@ -18,6 +18,11 @@ const docTemplate = `{
     "paths": {
         "/query-api/v1/balance": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -49,6 +54,11 @@ const docTemplate = `{
         },
         "/query-api/v1/nft/list": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -94,6 +104,11 @@ const docTemplate = `{
         },
         "/query-api/v1/nft/type": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -130,8 +145,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/query-api/v1/nftList": {
+            "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "query all type nft list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "wallet bsc address",
+                        "name": "wallet_address",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "nft contract address",
+                        "name": "contract_address",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/query-api/v1/txRecord/erc20": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -170,6 +233,11 @@ const docTemplate = `{
         },
         "/query-api/v1/txRecord/native": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -201,6 +269,11 @@ const docTemplate = `{
         },
         "/tx-api/v1/client/importNft": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -267,6 +340,11 @@ const docTemplate = `{
         },
         "/tx-api/v1/client/rechargeToken": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -333,6 +411,11 @@ const docTemplate = `{
         },
         "/tx-api/v1/hotWallet/mint": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -378,6 +461,11 @@ const docTemplate = `{
         },
         "/tx-api/v1/hotWallet/withdrawNFT": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -437,6 +525,11 @@ const docTemplate = `{
         },
         "/tx-api/v1/hotWallet/withdrawToken": {
             "post": {
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -513,11 +606,11 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "0.0.1",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "",
+	Title:            "Swagger Example API",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
