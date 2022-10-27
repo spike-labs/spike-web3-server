@@ -80,7 +80,7 @@ func (api *QueryGroup) NftList(c *gin.Context) {
 // @Success 200              {object} response.Response
 // @Failure 500              {object} response.Response
 // @Router  /query-api/v1/nft/list [post]
-// @Security api_key
+// @Security ApiKeyAuth
 func (api *QueryGroup) QueryNftList(c *gin.Context) {
 	var service request.NftListService
 	if err := c.ShouldBind(&service); err == nil {
@@ -106,7 +106,7 @@ func (api *QueryGroup) QueryNftList(c *gin.Context) {
 // @Success 200              {object} response.Response
 // @Failure 500              {object} response.Response
 // @Router  /query-api/v1/nft/type [post]
-// @Security api_key
+// @Security ApiKeyAuth
 func (api *QueryGroup) QueryNftType(c *gin.Context) {
 	var service request.NftTypeService
 
@@ -160,7 +160,7 @@ func (api *QueryGroup) QueryBalance(c *gin.Context) {
 // @Success 200            {object} response.Response
 // @Failure 500            {object} response.Response
 // @Router  /query-api/v1/txRecord/native [post]
-// @Security api_key
+// @Security ApiKeyAuth
 func (api *QueryGroup) QueryNativeTxRecord(c *gin.Context) {
 	var service request.NativeTxRecordService
 
@@ -191,7 +191,7 @@ func (api *QueryGroup) QueryNativeTxRecord(c *gin.Context) {
 // @Success 200              {object} response.Response
 // @Failure 500              {object} response.Response
 // @Router  /query-api/v1/txRecord/erc20 [post]
-// @Security api_key
+// @Security ApiKeyAuth
 func (api *QueryGroup) QueryERC20TxRecord(c *gin.Context) {
 	var service request.ERC20TxRecordService
 
