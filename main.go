@@ -12,9 +12,9 @@ import (
 // @title Swagger Example API
 // @version 0.0.1
 // @description
-// @securityDefinitions.api_key api_key
+// @securityDefinitions.apikey ApiKeyAuth
 // @in header
-// @name Authorization
+// @name api_key
 // @BasePath /
 func main() {
 	logger.SetLogLevel("*", "INFO")

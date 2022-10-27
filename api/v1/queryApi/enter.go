@@ -56,7 +56,7 @@ func (api *QueryGroup) InitQueryGroup(g *gin.RouterGroup) {
 // @Success 200              {object} response.Response
 // @Failure 500              {object} response.Response
 // @Router  /query-api/v1/nftList [post]
-// @Security api_key
+// @Security ApiKeyAuth
 func (api *QueryGroup) NftList(c *gin.Context) {
 	var service request.NftTypeService
 	if err := c.ShouldBind(&service); err == nil {
@@ -133,7 +133,7 @@ func (api *QueryGroup) QueryNftType(c *gin.Context) {
 // @Success 200            {object} response.Response
 // @Failure 500            {object} response.Response
 // @Router  /query-api/v1/balance [post]
-// @Security api_key
+// @Security ApiKeyAuth
 func (api *QueryGroup) QueryBalance(c *gin.Context) {
 	var service request.BalanceService
 

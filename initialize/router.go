@@ -15,6 +15,8 @@ var log = logger.Logger("initialize")
 func initRouter() (*gin.Engine, error) {
 	var r = gin.Default()
 	r.Use(middleware.Cors())
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	publicGroup := r.Group("")
 	{
 		// health
@@ -34,6 +36,5 @@ func initRouter() (*gin.Engine, error) {
 	txApiGroup := r.Group("/tx-api/v1")
 	txGroup.InitTxGroup(txApiGroup)
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r, nil
 }

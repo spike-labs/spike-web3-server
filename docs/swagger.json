@@ -5,13 +5,12 @@
         "contact": {},
         "version": "0.0.1"
     },
-    "basePath": "/",
     "paths": {
         "/query-api/v1/balance": {
             "post": {
                 "security": [
                     {
-                        "api_key": []
+                        "ApiKeyAuth": []
                     }
                 ],
                 "produces": [
@@ -140,7 +139,7 @@
             "post": {
                 "security": [
                     {
-                        "api_key": []
+                        "ApiKeyAuth": []
                     }
                 ],
                 "produces": [
@@ -591,6 +590,13 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "api_key",
+            "in": "header"
         }
     }
 }

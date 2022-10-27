@@ -20,7 +20,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "api_key": []
+                        "ApiKeyAuth": []
                     }
                 ],
                 "produces": [
@@ -149,7 +149,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "api_key": []
+                        "ApiKeyAuth": []
                     }
                 ],
                 "produces": [
@@ -601,6 +601,13 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "api_key",
+            "in": "header"
+        }
     }
 }`
 
@@ -608,7 +615,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "0.0.1",
 	Host:             "",
-	BasePath:         "/",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Swagger Example API",
 	Description:      "",

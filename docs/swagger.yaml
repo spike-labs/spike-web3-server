@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   response.Response:
     properties:
@@ -33,7 +32,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - api_key: []
+      - ApiKeyAuth: []
       summary: query wallet balance
   /query-api/v1/nft/list:
     post:
@@ -119,7 +118,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - api_key: []
+      - ApiKeyAuth: []
       summary: query all type nft list
   /query-api/v1/txRecord/erc20:
     post:
@@ -380,4 +379,9 @@ paths:
       security:
       - api_key: []
       summary: withdraw token
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: api_key
+    type: apiKey
 swagger: "2.0"
