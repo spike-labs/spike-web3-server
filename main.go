@@ -3,10 +3,12 @@ package main
 import (
 	logger "github.com/ipfs/go-log"
 	"github.com/spike-engine/spike-web3-server/cache"
+	"github.com/spike-engine/spike-web3-server/chain"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/dao"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/initialize"
+	"github.com/spike-engine/spike-web3-server/service/query"
+	"github.com/spike-engine/spike-web3-server/service/sign"
 )
 
 // @title Swagger Example API
@@ -18,10 +20,13 @@ import (
 // @BasePath /
 func main() {
 	logger.SetLogLevel("*", "INFO")
-	global.Viper = config.InitViper()
-	global.GormClient = initialize.GormMysql()
-	global.DbAccessor = dao.NewGormAccessor(global.GormClient)
-	global.RedisClient = cache.ConnectRedis()
-	//chain.NewBscListener()
+	config.Viper = config.InitViper()
+	dao.GormClient = initialize.GormMysql()
+	dao.DbAccessor = dao.NewGormAccessor(dao.GormClient)
+	cache.RedisClient = cache.ConnectRedis()
+
+	query.QurManager = query.NewQueryManager()
+	sign.HwManager = sign.NewHWManager()
+	chain.NewBscListener()
 	initialize.RunServer()
 }

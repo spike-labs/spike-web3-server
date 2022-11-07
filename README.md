@@ -93,10 +93,10 @@ export SPIKE_WEB3_CONFIG=~/spike_home/config-web3.toml
 ### Database
 ```shell
 # create database, replace 'spike_web3_server' with DbName config
-mysql -u root -p <sql/create-db.sql
+mysql -u root -p <sql/create_db.sql
 
 # create tables
-mysql -u root -p spike_web3_server < sql/create-tables.sql
+mysql -u root -p spike_web3_server < sql/create_tables.sql
 ```
 
 ### Swagger

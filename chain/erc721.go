@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spike-engine/spike-web3-server/cache"
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
+	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/game"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/util"
 	"math/big"
 	"sync"
@@ -57,9 +57,9 @@ func newERC721Listener(contractAddr string, ec *ethclient.Client, newBlockNotify
 		errorHandler:   errorHandler,
 		observers:      list.New(),
 	}
-	e.AttachObserver(cache.NewManager(global.RedisClient))
-	e.AttachObserver(game.NewCbManager(global.DbAccessor))
-	e.AttachObserver(game.NewNftManager(global.DbAccessor))
+	e.AttachObserver(cache.NewManager(cache.RedisClient))
+	e.AttachObserver(game.NewCbManager(dao.DbAccessor))
+	e.AttachObserver(game.NewNftManager(dao.DbAccessor))
 	return e
 }
 

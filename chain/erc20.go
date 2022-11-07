@@ -11,8 +11,8 @@ import (
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
+	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/game"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/util"
 	"math/big"
 	"strings"
@@ -71,7 +71,7 @@ func newERC20Listener(contractAddr string, ec *ethclient.Client, newBlockNotify 
 		errorHandler:   errorHandler,
 		observers:      list.New(),
 	}
-	el.AttachObserver(game.NewCbManager(global.DbAccessor))
+	el.AttachObserver(game.NewCbManager(dao.DbAccessor))
 	return el
 }
 

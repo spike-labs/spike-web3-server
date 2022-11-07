@@ -5,9 +5,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	logger "github.com/ipfs/go-log"
+	"github.com/spike-engine/spike-web3-server/cache"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/model"
 	"github.com/spike-engine/spike-web3-server/util"
 	"sync"
@@ -50,9 +50,9 @@ func (cm *CbManager) Update(event interface{}) {
 	if !ok {
 		return
 	}
-	util.Lock(e.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, global.RedisClient)
+	util.Lock(e.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, cache.RedisClient)
 
-	defer util.UnLock(e.TxHash, global.RedisClient)
+	defer util.UnLock(e.TxHash, cache.RedisClient)
 
 	txs, err := cm.QueryGameCb(e.TxHash, constant.NOTNOTIFIED)
 	if err != nil {
@@ -107,9 +107,9 @@ func (cm *CbManager) Run() {
 
 func (cm *CbManager) handleNotNotifiedTx(tx model.SpikeTx) {
 	if time.Now().After(time.UnixMilli(tx.CreateTime).Add(TXTIMEOUTDURATION)) {
-		util.Lock(tx.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, global.RedisClient)
+		util.Lock(tx.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, cache.RedisClient)
 
-		defer util.UnLock(tx.TxHash, global.RedisClient)
+		defer util.UnLock(tx.TxHash, cache.RedisClient)
 
 		log.Infof("tx cb timeout handle, orderId: %s, txHash : %s, createTime : %d", tx.OrderId, tx.TxHash, tx.CreateTime)
 		client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)

@@ -1,4 +1,4 @@
-package signService
+package sign
 
 import (
 	"context"
@@ -11,12 +11,11 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
+	"github.com/spike-engine/spike-web3-server/cache"
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/model"
-	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/response"
 	"github.com/spike-engine/spike-web3-server/util"
 	"math/big"
@@ -63,6 +62,10 @@ type WorkerInfo struct {
 	TaskNum       uint32
 }
 
+type UnSignTX struct {
+	Tx *types.Transaction
+}
+
 func NewAllRoundWorker(workers config.SignWorker) (*AllRoundWorker, error) {
 
 	bscClient, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
@@ -92,7 +95,7 @@ func NewAllRoundWorker(workers config.SignWorker) (*AllRoundWorker, error) {
 	worker := &AllRoundWorker{
 		BscClient:  bscClient,
 		httpClient: resty.New(),
-		rdb:        global.RedisClient,
+		rdb:        cache.RedisClient,
 		info:       info,
 		nftABI:     nftAbi,
 		vaultABI:   vaultAbi,
@@ -160,7 +163,7 @@ func (w *AllRoundWorker) SignatureTransaction(unSignTX *types.Transaction) (*typ
 
 	resp, err := w.httpClient.R().
 		SetHeader("Accept", "application/json").
-		SetBody(&request.SignTXService{Tx: unSignTX}).
+		SetBody(&UnSignTX{Tx: unSignTX}).
 		Post(w.GetInfo().serverUrl)
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-package queryService
+package query
 
 import (
 	"encoding/json"

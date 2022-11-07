@@ -6,26 +6,21 @@ import (
 	"github.com/spike-engine/spike-web3-server/middleware"
 	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/response"
-	"github.com/spike-engine/spike-web3-server/service/signService"
-	"github.com/spike-engine/spike-web3-server/service/txService"
+	"github.com/spike-engine/spike-web3-server/service/sign"
+	"github.com/spike-engine/spike-web3-server/service/tx"
 )
 
 var log = logger.Logger("txApi")
 
 type TxGroup struct {
-	hwManager *signService.HotWalletManager
-	txSrv     *txService.TxService
+	hwManager *sign.HotWalletManager
+	txSrv     *tx.TxService
 }
 
 func NewTxGroup() (TxGroup, error) {
-	hwManager, err := signService.NewHWManager()
-	if err != nil {
-		log.Error("===Spike log:", err)
-		return TxGroup{}, err
-	}
 	return TxGroup{
-		hwManager: hwManager,
-		txSrv:     txService.TxSrv,
+		hwManager: sign.HwManager,
+		txSrv:     tx.TxSrv,
 	}, nil
 }
 
@@ -60,7 +55,7 @@ func (txGroup *TxGroup) BatchMint(c *gin.Context) {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage("request params error", c)
 	}
-	err = txGroup.hwManager.BatchMint(service)
+	err = service.BatchMint(txGroup.hwManager)
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage(err.Error(), c)
@@ -88,7 +83,7 @@ func (txGroup *TxGroup) BatchWithdrawNFT(c *gin.Context) {
 		response.FailWithMessage("request params error", c)
 	}
 
-	err = txGroup.hwManager.WithdrawNFT(service)
+	err = service.WithdrawNFT(txGroup.hwManager)
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage(err.Error(), c)
@@ -116,7 +111,7 @@ func (txGroup *TxGroup) BatchWithdrawToken(c *gin.Context) {
 		response.FailWithMessage("request params error", c)
 	}
 
-	err = txGroup.hwManager.WithdrawToken(service)
+	err = service.WithdrawToken(txGroup.hwManager)
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage(err.Error(), c)
@@ -146,7 +141,7 @@ func (txGroup *TxGroup) RechargeToken(c *gin.Context) {
 		return
 	}
 
-	err = txGroup.txSrv.RechargeToken(service)
+	err = service.RechargeToken(txGroup.txSrv)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -174,7 +169,7 @@ func (txGroup *TxGroup) ImportNft(c *gin.Context) {
 		response.FailWithMessage("request params error", c)
 	}
 
-	err = txGroup.txSrv.ImportNft(service)
+	err = service.ImportNft(txGroup.txSrv)
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage(err.Error(), c)

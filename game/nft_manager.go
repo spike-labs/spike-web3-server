@@ -2,8 +2,8 @@ package game
 
 import (
 	"github.com/google/uuid"
+	"github.com/spike-engine/spike-web3-server/cache"
 	"github.com/spike-engine/spike-web3-server/constant"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/model"
 	"github.com/spike-engine/spike-web3-server/util"
 	"strconv"
@@ -41,9 +41,9 @@ func (nm *NftManager) Update(event interface{}) {
 	if !ok {
 		return
 	}
-	util.Lock(strconv.FormatInt(e.TokenId, 10), constant.TXCBVALUE, LOCKTIMEOUTDURATION, global.RedisClient)
+	util.Lock(strconv.FormatInt(e.TokenId, 10), constant.TXCBVALUE, LOCKTIMEOUTDURATION, cache.RedisClient)
 
-	defer util.UnLock(strconv.FormatInt(e.TokenId, 10), global.RedisClient)
+	defer util.UnLock(strconv.FormatInt(e.TokenId, 10), cache.RedisClient)
 
 	nftOwner, err := nm.QueryNftOwner(e.TokenId, e.ContractAddr)
 	if err != nil {

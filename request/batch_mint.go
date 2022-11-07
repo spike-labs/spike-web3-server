@@ -1,6 +1,8 @@
 package request
 
-import "github.com/ethereum/go-ethereum/core/types"
+import (
+	"github.com/spike-engine/spike-web3-server/service/sign"
+)
 
 type BatchMintNFTService struct {
 	OrderId  string `form:"order_id" json:"order_id" binding:"required"`
@@ -8,6 +10,7 @@ type BatchMintNFTService struct {
 	Cb       string `form:"cb" json:"cb" binding:"required"`
 }
 
-type SignTXService struct {
-	Tx *types.Transaction
+func (b *BatchMintNFTService) BatchMint(hwManager *sign.HotWalletManager) error {
+	err := hwManager.BatchMint(b.OrderId, b.TokenURI, b.Cb)
+	return err
 }
