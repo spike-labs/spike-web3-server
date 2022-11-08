@@ -1,10 +1,10 @@
-package signService
+package sign
 
 import (
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
+	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/game"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/model"
 	"sort"
 	"sync"
@@ -29,7 +29,7 @@ type hotWalletScheduler struct {
 
 func newScheduler() *hotWalletScheduler {
 	return &hotWalletScheduler{
-		gorm:    global.DbAccessor,
+		gorm:    dao.DbAccessor,
 		workers: make([]Worker, 0),
 
 		mintSched: make(chan *model.BatchMintReq),

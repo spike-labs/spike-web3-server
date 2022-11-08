@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+var Viper *viper.Viper
+
 func InitViper() *viper.Viper {
 	var configPath string
 	if configEnv := os.Getenv(constant.ConfigEnv); configEnv == "" {

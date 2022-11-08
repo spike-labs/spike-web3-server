@@ -1,31 +1,26 @@
 package queryApi
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
 	logger "github.com/ipfs/go-log"
 	_ "github.com/spike-engine/spike-web3-server/docs"
 	"github.com/spike-engine/spike-web3-server/middleware"
 	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/response"
-	"github.com/spike-engine/spike-web3-server/service/queryService"
-	"time"
+	"github.com/spike-engine/spike-web3-server/service/query"
 )
 
 var log = logger.Logger("queryApi")
 
-const queryNftListTimeout = 20 * time.Second
-const queryTxRecordTimeout = 20 * time.Second
-
 type QueryGroup struct {
-	manager        *queryService.QueryManager
-	balanceService *queryService.BalanceService
+	manager        *query.QueryManager
+	balanceService *query.BalanceService
 }
 
 func NewQueryApiGroup() QueryGroup {
 	return QueryGroup{
-		manager:        queryService.NewQueryManager(),
-		balanceService: queryService.BalanceSrv,
+		manager:        query.QurManager,
+		balanceService: query.BalanceSrv,
 	}
 }
 
@@ -61,7 +56,7 @@ func (api *QueryGroup) NftList(c *gin.Context) {
 	var service request.NftTypeService
 	if err := c.ShouldBind(&service); err == nil {
 		log.Infof("query wallet %s contractAddr %s nft list", service.WalletAddress, service.ContractAddress)
-		result, err := api.manager.NftList(service.ContractAddress, service.WalletAddress)
+		result, err := service.NftList(api.manager)
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
 			return
@@ -85,10 +80,8 @@ func (api *QueryGroup) QueryNftList(c *gin.Context) {
 	var service request.NftListService
 	if err := c.ShouldBind(&service); err == nil {
 		log.Infof("query wallet %s contractAddr %s nft list", service.WalletAddress, service.ContractAddress)
-		ctx := context.Background()
-		cctx, cancel := context.WithTimeout(ctx, queryNftListTimeout)
-		result, err := api.manager.QueryNftList(cctx, service.ContractAddress, service.WalletAddress, service.Type)
-		cancel()
+
+		result, err := service.QueryNftList(api.manager)
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
 			return
@@ -112,10 +105,8 @@ func (api *QueryGroup) QueryNftType(c *gin.Context) {
 
 	if err := c.ShouldBind(&service); err == nil {
 		log.Infof("query wallet %s contractAddr %s nft type", service.WalletAddress, service.ContractAddress)
-		ctx := context.Background()
-		cctx, cancel := context.WithTimeout(ctx, queryNftListTimeout)
-		result, err := api.manager.QueryNftType(cctx, service.ContractAddress, service.WalletAddress)
-		cancel()
+
+		result, err := service.QueryNftType(api.manager)
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
 			return
@@ -142,7 +133,7 @@ func (api *QueryGroup) QueryBalance(c *gin.Context) {
 			response.FailWithMessage("request params error", c)
 		} else {
 			log.Infof("query wallet %s balance", service.WalletAddress)
-			result, err := api.balanceService.QueryWalletService(service.WalletAddress)
+			result, err := service.QueryWalletService(api.balanceService)
 			if err != nil {
 				response.FailWithMessage(err.Error(), c)
 				return
@@ -169,10 +160,8 @@ func (api *QueryGroup) QueryNativeTxRecord(c *gin.Context) {
 			response.FailWithMessage("request params error", c)
 		} else {
 			log.Infof("query wallet %s native tx record", service.WalletAddress)
-			ctx := context.Background()
-			cctx, cancel := context.WithTimeout(ctx, queryTxRecordTimeout)
-			result, err := api.manager.QueryNativeRecord(cctx, service.WalletAddress)
-			cancel()
+
+			result, err := service.QueryNativeRecord(api.manager)
 			if err != nil {
 				response.FailWithMessage(err.Error(), c)
 				return
@@ -200,10 +189,7 @@ func (api *QueryGroup) QueryERC20TxRecord(c *gin.Context) {
 			response.FailWithMessage("request params error", c)
 		} else {
 			log.Infof("query wallet %s erc20 : %s tx record", service.WalletAddress, service.ContractAddress)
-			ctx := context.Background()
-			cctx, cancel := context.WithTimeout(ctx, queryTxRecordTimeout)
-			result, err := api.manager.QueryERC20TxRecord(cctx, service.WalletAddress, service.ContractAddress)
-			cancel()
+			result, err := service.QueryERC20TxRecord(api.manager)
 			if err != nil {
 				response.FailWithMessage(err.Error(), c)
 				return

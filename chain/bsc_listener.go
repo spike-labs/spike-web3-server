@@ -5,11 +5,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-redis/redis/v8"
 	logger "github.com/ipfs/go-log"
+	"github.com/spike-engine/spike-web3-server/cache"
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
+	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/game"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/util"
 	"math/big"
 	"sync"
@@ -49,7 +50,7 @@ func NewBscListener() (*BscListener, error) {
 	bl.errorHandle = errorHandle
 	bl.ec = client
 
-	cbManger := game.NewCbManager(global.DbAccessor)
+	cbManger := game.NewCbManager(dao.DbAccessor)
 	go cbManger.Run()
 
 	l := make(map[string]Listener)
@@ -84,14 +85,14 @@ func (bl *BscListener) Run() {
 			log.Error("query now bsc_blockNum err :", err)
 			continue
 		}
-		cacheBlockNum, isNil, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, global.RedisClient)
+		cacheBlockNum, isNil, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, cache.RedisClient)
 		if err != nil {
 			log.Errorf("query redis err : %v", err)
 			return
 		}
 		if isNil {
 			log.Infof("blockNum is not exist")
-			util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, global.RedisClient)
+			util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, cache.RedisClient)
 			break
 		}
 
@@ -108,7 +109,7 @@ func (bl *BscListener) Run() {
 			}(listener)
 		}
 		wg.Wait()
-		util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, global.RedisClient)
+		util.SetFromRedis(BLOCKNUM+config.Cfg.System.MachineId, nowBlockNum-constant.BlockConfirmHeight, 0, cache.RedisClient)
 	}
 
 	for _, listener := range bl.l {

@@ -1,13 +1,13 @@
-package queryService
+package query
 
 import (
 	"context"
 	"encoding/json"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-redis/redis/v8"
+	"github.com/spike-engine/spike-web3-server/cache"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/model"
 	"github.com/spike-engine/spike-web3-server/response"
 	"github.com/spike-engine/spike-web3-server/util"
@@ -15,6 +15,8 @@ import (
 )
 
 const nftListDuration = 20 * time.Minute
+
+var QurManager *QueryManager
 
 type QueryManager struct {
 	sched       *Scheduler
@@ -42,7 +44,7 @@ func NewQueryManager() *QueryManager {
 	return &QueryManager{
 		network:     network,
 		sched:       NewScheduler(),
-		redisClient: global.RedisClient,
+		redisClient: cache.RedisClient,
 	}
 }
 

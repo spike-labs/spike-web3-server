@@ -6,7 +6,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var log = logger.Logger("dao")
+var (
+	log        = logger.Logger("dao")
+	GormClient *gorm.DB
+	DbAccessor *GormAccessor
+)
 
 type GormAccessor struct {
 	*gorm.DB

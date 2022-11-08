@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/spike-engine/spike-web3-server/global"
+	"github.com/spike-engine/spike-web3-server/cache"
 	"github.com/spike-engine/spike-web3-server/response"
 )
 
@@ -14,7 +14,7 @@ func ApiKeyAuth() gin.HandlerFunc {
 			response.FailWithMessage("header: api_key is required", c)
 			c.Abort()
 		} else {
-			res, _ := global.RedisClient.SIsMember(context.Background(), "api_key", params.APIKey).Result()
+			res, _ := cache.RedisClient.SIsMember(context.Background(), "api_key", params.APIKey).Result()
 			if res {
 				c.Next()
 			} else {

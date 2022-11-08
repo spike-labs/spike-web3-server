@@ -1,4 +1,4 @@
-package signService
+package sign
 
 import (
 	"errors"
@@ -6,18 +6,21 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	logger "github.com/ipfs/go-log"
+	"github.com/spike-engine/spike-web3-server/cache"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
+	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/game"
-	"github.com/spike-engine/spike-web3-server/global"
 	"github.com/spike-engine/spike-web3-server/model"
-	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/util"
 	"sync"
 	"time"
 )
 
-var log = logger.Logger("sign")
+var (
+	log       = logger.Logger("sign")
+	HwManager *HotWalletManager
+)
 
 type HotWalletManager struct {
 	scheduler *hotWalletScheduler
@@ -26,22 +29,22 @@ type HotWalletManager struct {
 	rLK       sync.RWMutex
 }
 
-func NewHWManager() (*HotWalletManager, error) {
+func NewHWManager() *HotWalletManager {
 	m := &HotWalletManager{
 		scheduler: newScheduler(),
-		gorm:      global.DbAccessor,
-		rdb:       global.RedisClient,
+		gorm:      dao.DbAccessor,
+		rdb:       cache.RedisClient,
 	}
 
 	_, isNil, err := util.GetIntFromRedis(constant.TOKENID, m.rdb)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	if isNil {
 		err := util.SetFromRedis(constant.TOKENID, constant.TOKENID_FROM, 0, m.rdb)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 	}
 
@@ -49,20 +52,20 @@ func NewHWManager() (*HotWalletManager, error) {
 		worker, err := NewAllRoundWorker(config.Cfg.SignWorkers[i])
 		if err != nil {
 			log.Error("===Spike log:", err)
-			return nil, err
+			panic(err)
 		}
 		m.AddWorker(worker)
 	}
 	go m.scheduler.runSchedule()
 
-	return m, nil
+	return m
 }
 
 func (w *HotWalletManager) AddWorker(worker Worker) {
 	w.scheduler.workers = append(w.scheduler.workers, worker)
 }
 
-func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error {
+func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string) error {
 	w.rLK.Lock()
 	TokenId, _, err := util.GetIntFromRedis(constant.TOKENID, w.rdb)
 	if err != nil {
@@ -71,7 +74,7 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error 
 
 	req := &model.BatchMintReq{
 		Uuid:     uuid.New().String(),
-		TokenURI: service.TokenURI,
+		TokenURI: tokenURI,
 		TokenID:  TokenId,
 	}
 
@@ -82,11 +85,11 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error 
 	w.rLK.Unlock()
 
 	err = w.gorm.SaveTxCb(model.SpikeTx{
-		OrderId:         service.OrderId,
+		OrderId:         orderId,
 		Uuid:            req.Uuid,
 		From:            constant.EmptyAddress,
 		To:              config.Cfg.Contract.GameVaultAddress,
-		Cb:              service.Cb,
+		Cb:              cb,
 		ContractAddress: config.Cfg.Contract.NftContractAddress[0],
 		CreateTime:      time.Now().UnixMilli(),
 		TokenId:         TokenId,
@@ -98,28 +101,28 @@ func (w *HotWalletManager) BatchMint(service request.BatchMintNFTService) error 
 	return nil
 }
 
-func (w *HotWalletManager) WithdrawToken(service request.BatchWithdrawalTokenService) error {
+func (w *HotWalletManager) WithdrawToken(orderId string, toAddress string, amount string, contractAddress string, cb string) error {
 
-	if !util.IsValidAddress(service.ToAddress) || !util.IsValidAddress(service.ContractAddress) {
+	if !util.IsValidAddress(toAddress) || !util.IsValidAddress(contractAddress) {
 		return errors.New("=== Spike log : address is error")
 	}
 
 	req := &model.WithdrawTokenReq{
 		Uuid:         uuid.New().String(),
-		ToAddress:    common.HexToAddress(service.ToAddress),
-		Amount:       service.Amount,
-		TokenAddress: common.HexToAddress(service.ContractAddress),
+		ToAddress:    common.HexToAddress(toAddress),
+		Amount:       amount,
+		TokenAddress: common.HexToAddress(contractAddress),
 	}
 
 	err := w.gorm.SaveTxCb(model.SpikeTx{
-		OrderId:         service.OrderId,
+		OrderId:         orderId,
 		Uuid:            req.Uuid,
 		From:            config.Cfg.Contract.GameVaultAddress,
-		To:              service.ToAddress,
-		Cb:              service.Cb,
-		ContractAddress: service.ContractAddress,
+		To:              toAddress,
+		Cb:              cb,
+		ContractAddress: contractAddress,
 		CreateTime:      time.Now().UnixMilli(),
-		Amount:          service.Amount,
+		Amount:          amount,
 	})
 	if err != nil {
 		return err
@@ -128,28 +131,28 @@ func (w *HotWalletManager) WithdrawToken(service request.BatchWithdrawalTokenSer
 	return nil
 }
 
-func (w *HotWalletManager) WithdrawNFT(service request.BatchWithdrawalNFTService) error {
+func (w *HotWalletManager) WithdrawNFT(orderId string, toAddress string, tokenId int64, contractAddress string, cb string) error {
 
-	if !util.IsValidAddress(service.ToAddress) || !util.IsValidAddress(service.ContractAddress) {
+	if !util.IsValidAddress(toAddress) || !util.IsValidAddress(contractAddress) {
 		return errors.New("=== Spike log : address is error")
 	}
 
 	req := &model.WithdrawNFTReq{
 		Uuid:         uuid.New().String(),
-		TokenId:      service.TokenID,
-		ToAddress:    common.HexToAddress(service.ToAddress),
-		TokenAddress: common.HexToAddress(service.ContractAddress),
+		TokenId:      tokenId,
+		ToAddress:    common.HexToAddress(toAddress),
+		TokenAddress: common.HexToAddress(contractAddress),
 	}
 
 	err := w.gorm.SaveTxCb(model.SpikeTx{
-		OrderId:         service.OrderId,
+		OrderId:         orderId,
 		Uuid:            req.Uuid,
 		From:            config.Cfg.Contract.GameVaultAddress,
-		To:              service.ToAddress,
-		Cb:              service.Cb,
-		ContractAddress: service.ContractAddress,
+		To:              toAddress,
+		Cb:              cb,
+		ContractAddress: contractAddress,
 		CreateTime:      time.Now().UnixMilli(),
-		TokenId:         service.TokenID,
+		TokenId:         tokenId,
 	})
 	if err != nil {
 		return err
