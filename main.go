@@ -3,7 +3,6 @@ package main
 import (
 	logger "github.com/ipfs/go-log"
 	"github.com/spike-engine/spike-web3-server/cache"
-	"github.com/spike-engine/spike-web3-server/chain"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/initialize"
@@ -27,6 +26,6 @@ func main() {
 
 	query.QurManager = query.NewQueryManager()
 	sign.HwManager = sign.NewHWManager()
-	chain.NewBscListener()
+	//chain.NewBscListener()
 	initialize.RunServer()
 }

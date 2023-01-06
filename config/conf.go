@@ -77,8 +77,9 @@ type Contract struct {
 }
 
 type SignService struct {
-	TaskThreshold int `toml:"TaskThreshold"`
-	SchedInterval int `toml:"SchedInterval"`
+	TaskThreshold  int     `toml:"TaskThreshold"`
+	SchedInterval  int     `toml:"SchedInterval"`
+	GasCoefficient float64 `toml:"GasCoefficient"`
 }
 
 type SignWorker struct {
