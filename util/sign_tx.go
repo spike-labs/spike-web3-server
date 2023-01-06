@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/shopspring/decimal"
+	"github.com/spike-engine/spike-web3-server/config"
 	"math/big"
 	"reflect"
 	"regexp"
@@ -15,11 +16,22 @@ import (
 )
 
 type SpikeTx struct {
-	Data      []byte
-	To        string
-	BscClient *ethclient.Client
-	Nonce     uint64
 	From      common.Address
+	To        string
+	InputData []byte
+	Nonce     uint64
+
+	BscClient *ethclient.Client
+}
+
+func NewSpikeTx(from common.Address, to string, inputData []byte, nonce uint64, bscClient *ethclient.Client) *SpikeTx {
+	return &SpikeTx{
+		From:      from,
+		InputData: inputData,
+		To:        to,
+		Nonce:     nonce,
+		BscClient: bscClient,
+	}
 }
 
 func (s *SpikeTx) ConstructionTransaction() (*types.Transaction, error) {
@@ -31,21 +43,23 @@ func (s *SpikeTx) ConstructionTransaction() (*types.Transaction, error) {
 		return nil, err
 	}
 
-	gasLimit, err := s.BscClient.EstimateGas(context.Background(), ethereum.CallMsg{
+	simulatorGasLimit, err := s.BscClient.EstimateGas(context.Background(), ethereum.CallMsg{
 		From: s.From,
 		To:   &toAddress,
-		Data: s.Data,
+		Data: s.InputData,
 	})
 	if err != nil {
 		return nil, err
 	}
+
+	gasLimit := uint64(float64(simulatorGasLimit) * config.Cfg.SignService.GasCoefficient)
 
 	tx := types.NewTx(
 		&types.LegacyTx{
 			Nonce:    s.Nonce,
 			Gas:      gasLimit,
 			GasPrice: gasPrice,
-			Data:     s.Data,
+			Data:     s.InputData,
 			To:       &toAddress,
 		})
 	return tx, nil

@@ -215,15 +215,7 @@ func (w *AllRoundWorker) BatchMint(reqs []model.BatchMintReq) ([]string, string,
 		return nil, "", err
 	}
 
-	spikeTx := &util.SpikeTx{
-		Data:      inputData,
-		To:        config.Cfg.Contract.NftContractAddress[0],
-		BscClient: w.BscClient,
-		From:      common.HexToAddress(w.info.walletAddress),
-		Nonce:     CNonce,
-	}
-
-	unSignTransaction, err := spikeTx.ConstructionTransaction()
+	unSignTransaction, err := util.NewSpikeTx(common.HexToAddress(w.info.walletAddress), config.Cfg.Contract.NftContractAddress[0], inputData, CNonce, w.BscClient).ConstructionTransaction()
 	if err != nil {
 		return nil, "", err
 	}
@@ -279,15 +271,7 @@ func (w *AllRoundWorker) WithdrawToken(reqs []model.WithdrawTokenReq) ([]string,
 		return nil, "", err
 	}
 
-	spikeTx := &util.SpikeTx{
-		Data:      inputData,
-		To:        config.Cfg.Contract.GameVaultAddress,
-		BscClient: w.BscClient,
-		From:      common.HexToAddress(w.info.walletAddress),
-		Nonce:     CNonce,
-	}
-
-	unSignTransaction, err := spikeTx.ConstructionTransaction()
+	unSignTransaction, err := util.NewSpikeTx(common.HexToAddress(w.info.walletAddress), config.Cfg.Contract.GameVaultAddress, inputData, CNonce, w.BscClient).ConstructionTransaction()
 	if err != nil {
 		return nil, "", err
 	}
@@ -343,15 +327,7 @@ func (w *AllRoundWorker) WithdrawNFT(reqs []model.WithdrawNFTReq) ([]string, str
 		return nil, "", err
 	}
 
-	spikeTx := &util.SpikeTx{
-		Data:      inputData,
-		To:        config.Cfg.Contract.GameVaultAddress,
-		BscClient: w.BscClient,
-		From:      common.HexToAddress(w.info.walletAddress),
-		Nonce:     CNonce,
-	}
-
-	unSignTransaction, err := spikeTx.ConstructionTransaction()
+	unSignTransaction, err := util.NewSpikeTx(common.HexToAddress(w.info.walletAddress), config.Cfg.Contract.GameVaultAddress, inputData, CNonce, w.BscClient).ConstructionTransaction()
 	if err != nil {
 		return nil, "", err
 	}

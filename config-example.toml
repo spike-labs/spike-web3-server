@@ -36,6 +36,7 @@ MaxOpenConns = 0
 [SignService]
 TaskThreshold = 1000
 SchedInterval = 1
+GasCoefficient = 1.2
 
 [[SignWorkers]]
 WalletAddress = "0x1111111111111111111111111111111111111111"
