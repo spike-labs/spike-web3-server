@@ -82,8 +82,14 @@ func (bl *BNBListener) NewBlockFilter() error {
 		log.Error("bnb subscribe new head err : ", err)
 		return err
 	}
+	resubscribeTicker := time.NewTicker(5 * time.Minute)
 	for {
 		select {
+		case <-resubscribeTicker.C:
+			sub = event.Resubscribe(time.Millisecond, func(ctx context.Context) (event.Subscription, error) {
+				return bl.ec.SubscribeNewHead(context.Background(), newBlockChan)
+			})
+			log.Info("ticker reSubscribe ws")
 		case err = <-sub.Err():
 			sub = event.Resubscribe(time.Millisecond, func(ctx context.Context) (event.Subscription, error) {
 				return bl.ec.SubscribeNewHead(context.Background(), newBlockChan)
@@ -95,7 +101,7 @@ func (bl *BNBListener) NewBlockFilter() error {
 
 			if height.Int64()-1 > cacheHeight {
 				for i := cacheHeight + 1; i < height.Int64(); i++ {
-					log.Infof("ws node timeout err : height %d", i)
+					log.Errorf("ws node timeout err : height %d", i)
 					bl.errorHandler <- ErrMsg{
 						contractAddr: constant.EmptyAddress,
 						from:         big.NewInt(i),

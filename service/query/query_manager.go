@@ -28,10 +28,13 @@ func NewQueryManager() *QueryManager {
 	client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
 	if err != nil {
 		panic("eth client dial err")
-		return nil
 	}
 	chainId, err := client.ChainID(context.Background())
+	if err != nil {
+		panic("query chainId err")
+	}
 	var network string
+	log.Infof("chainId: %s", chainId.String())
 	switch chainId.String() {
 	case "56":
 		network = "bsc"
