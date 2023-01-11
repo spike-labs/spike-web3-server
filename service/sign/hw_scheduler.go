@@ -1,14 +1,15 @@
 package sign
 
 import (
+	"sort"
+	"sync"
+	"time"
+
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
 	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/game"
 	"github.com/spike-engine/spike-web3-server/model"
-	"sort"
-	"sync"
-	"time"
 )
 
 type hotWalletScheduler struct {
@@ -33,7 +34,7 @@ func newScheduler() *hotWalletScheduler {
 		workers: make([]Worker, 0),
 
 		mintSched: make(chan *model.BatchMintReq),
-		mintQueue: &model.BatchMintQueue{Reqs: make([]model.BatchMintReq, 0)},
+		mintQueue: &model.BatchMintQueue{Reqs: make(map[string][]model.BatchMintReq, 0)},
 
 		tokenSched: make(chan *model.WithdrawTokenReq),
 		tokenQueue: &model.WithdrawTokenQueue{Reqs: make([]model.WithdrawTokenReq, 0)},
@@ -65,7 +66,7 @@ func (hw *hotWalletScheduler) runSchedule() {
 		select {
 		case req := <-hw.mintSched:
 			hw.mintQueue.Push(*req)
-			if hw.mintQueue.Len() < config.Cfg.SignService.TaskThreshold {
+			if hw.mintQueue.Len(req.NFTAddress) < config.Cfg.SignService.TaskThreshold {
 				break
 			}
 			hw.schedMintTask()
@@ -85,7 +86,7 @@ func (hw *hotWalletScheduler) runSchedule() {
 			hw.schedNFTTask()
 
 		case <-ticker.C:
-			if hw.mintQueue.Len() != 0 {
+			if hw.mintQueue.LenOfAll() != 0 {
 				hw.schedMintTask()
 			}
 
@@ -181,29 +182,35 @@ func (hw *hotWalletScheduler) pickRightWorker() Worker {
 func (hw *hotWalletScheduler) CheckExecMintTask() [][]model.BatchMintReq {
 	hw.taskLK.Lock()
 	defer hw.taskLK.Unlock()
-	taskNum := hw.mintQueue.Len()
+
 	taskQueues := make([][]model.BatchMintReq, 0)
-	switch {
 
-	case taskNum > config.Cfg.SignService.TaskThreshold:
+	for addr := range hw.mintQueue.Reqs {
+		taskNum := hw.mintQueue.Len(addr)
+		switch {
 
-		for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
+		case taskNum > config.Cfg.SignService.TaskThreshold:
 
-			reqs := hw.mintQueue.Reqs[i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
-			taskQueues = append(taskQueues, reqs)
+			for i := 0; i < taskNum/config.Cfg.SignService.TaskThreshold; i++ {
 
-			if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
-				reqs := hw.mintQueue.Reqs[(i+1)*config.Cfg.SignService.TaskThreshold:]
+				reqs := hw.mintQueue.Reqs[addr][i*config.Cfg.SignService.TaskThreshold : (i+1)*config.Cfg.SignService.TaskThreshold]
 				taskQueues = append(taskQueues, reqs)
+
+				if i+1 == taskNum/config.Cfg.SignService.TaskThreshold && taskNum%config.Cfg.SignService.TaskThreshold != 0 {
+					reqs := hw.mintQueue.Reqs[addr][(i+1)*config.Cfg.SignService.TaskThreshold:]
+					taskQueues = append(taskQueues, reqs)
+				}
 			}
+			hw.mintQueue.Clear(addr)
+			return taskQueues
+		case taskNum <= config.Cfg.SignService.TaskThreshold:
+			taskQueues = append(taskQueues, hw.mintQueue.Reqs[addr])
+			hw.mintQueue.Clear(addr)
+			return taskQueues
 		}
-		hw.mintQueue.Clear()
-		return taskQueues
-	case taskNum <= config.Cfg.SignService.TaskThreshold:
-		taskQueues = append(taskQueues, hw.mintQueue.Reqs)
-		hw.mintQueue.Clear()
-		return taskQueues
+
 	}
+
 	return nil
 }
 

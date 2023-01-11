@@ -2,10 +2,14 @@ package sign
 
 import (
 	"errors"
+	"sync"
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	logger "github.com/ipfs/go-log"
+
 	"github.com/spike-engine/spike-web3-server/cache"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
@@ -13,8 +17,6 @@ import (
 	"github.com/spike-engine/spike-web3-server/game"
 	"github.com/spike-engine/spike-web3-server/model"
 	"github.com/spike-engine/spike-web3-server/util"
-	"sync"
-	"time"
 )
 
 var (
@@ -65,24 +67,25 @@ func (w *HotWalletManager) AddWorker(worker Worker) {
 	w.scheduler.workers = append(w.scheduler.workers, worker)
 }
 
-func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string) error {
+func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string, contractAddress string) error {
 	w.rLK.Lock()
+	defer w.rLK.Unlock()
 	TokenId, _, err := util.GetIntFromRedis(constant.TOKENID, w.rdb)
 	if err != nil {
 		return err
 	}
 
 	req := &model.BatchMintReq{
-		Uuid:     uuid.New().String(),
-		TokenURI: tokenURI,
-		TokenID:  TokenId,
+		Uuid:       uuid.New().String(),
+		TokenURI:   tokenURI,
+		TokenID:    TokenId,
+		NFTAddress: contractAddress,
 	}
 
 	err = util.IncrFromRedis(constant.TOKENID, w.rdb)
 	if err != nil {
 		return err
 	}
-	w.rLK.Unlock()
 
 	err = w.gorm.SaveTxCb(model.SpikeTx{
 		OrderId:         orderId,
@@ -90,7 +93,7 @@ func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string)
 		From:            constant.EmptyAddress,
 		To:              config.Cfg.Contract.GameVaultAddress,
 		Cb:              cb,
-		ContractAddress: config.Cfg.Contract.NftContractAddress[0],
+		ContractAddress: contractAddress,
 		CreateTime:      time.Now().UnixMilli(),
 		TokenId:         TokenId,
 	})
