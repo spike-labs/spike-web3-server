@@ -1,18 +1,20 @@
 package model
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type BatchMintReq struct {
-	Uuid     string `json:"uuid"`
-	TokenID  int64  `json:"token_id"`
-	TokenURI string `json:"token_uri"`
+	Uuid       string `json:"uuid"`
+	TokenID    int64  `json:"token_id"`
+	TokenURI   string `json:"token_uri"`
+	NFTAddress string `json:"nft_address"`
 }
 
 type BatchMintQueue struct {
-	Reqs []BatchMintReq
+	Reqs map[string][]BatchMintReq
 	qLK  sync.Mutex
 }
 
@@ -20,28 +22,42 @@ func (q *BatchMintQueue) Push(x BatchMintReq) {
 	q.qLK.Lock()
 	defer q.qLK.Unlock()
 	item := x
-	q.Reqs = append(q.Reqs, item)
+	q.Reqs[x.NFTAddress] = append(q.Reqs[x.NFTAddress], item)
 }
 
-func (q *BatchMintQueue) Remove(i int) BatchMintReq {
+func (q *BatchMintQueue) Remove(nftAddress string, i int) BatchMintReq {
 	q.qLK.Lock()
 	defer q.qLK.Unlock()
-	old := q.Reqs
+	old := q.Reqs[nftAddress]
 	n := len(old)
 	item := old[i]
 	old[i] = old[n-1]
 	old[n-1] = BatchMintReq{}
-	q.Reqs = old[0 : n-1]
+	q.Reqs[nftAddress] = old[0 : n-1]
 	return item
 }
 
-func (q *BatchMintQueue) Clear() {
+func (q *BatchMintQueue) Clear(nftAddress ...string) {
 	q.qLK.Lock()
 	defer q.qLK.Unlock()
-	q.Reqs = make([]BatchMintReq, 0)
+
+	for i := range nftAddress {
+		q.Reqs[nftAddress[i]] = make([]BatchMintReq, 0)
+	}
 }
 
-func (q *BatchMintQueue) Len() int { return len(q.Reqs) }
+func (q *BatchMintQueue) Len(nftAddress string) int {
+	return len(q.Reqs[nftAddress])
+}
+
+func (q *BatchMintQueue) LenOfAll() int {
+	var taskLen int
+	for i := range q.Reqs {
+		taskLen += len(q.Reqs[i])
+	}
+
+	return taskLen
+}
 
 type WithdrawTokenReq struct {
 	Uuid         string         `json:"uuid"`

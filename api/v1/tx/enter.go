@@ -3,6 +3,7 @@ package txApi
 import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/ipfs/go-log"
+
 	"github.com/spike-engine/spike-web3-server/middleware"
 	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/response"
@@ -54,6 +55,7 @@ func (txGroup *TxGroup) BatchMint(c *gin.Context) {
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage("request params error", c)
+		return
 	}
 	err = service.BatchMint(txGroup.hwManager)
 	if err != nil {
@@ -81,6 +83,7 @@ func (txGroup *TxGroup) BatchWithdrawNFT(c *gin.Context) {
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage("request params error", c)
+		return
 	}
 
 	err = service.WithdrawNFT(txGroup.hwManager)
@@ -109,6 +112,7 @@ func (txGroup *TxGroup) BatchWithdrawToken(c *gin.Context) {
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage("request params error", c)
+		return
 	}
 
 	err = service.WithdrawToken(txGroup.hwManager)
@@ -167,6 +171,7 @@ func (txGroup *TxGroup) ImportNft(c *gin.Context) {
 	if err != nil {
 		log.Error("=== Spike log: ", err)
 		response.FailWithMessage("request params error", c)
+		return
 	}
 
 	err = service.ImportNft(txGroup.txSrv)

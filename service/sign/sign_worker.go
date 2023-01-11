@@ -4,6 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math/big"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -11,6 +16,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
+
 	"github.com/spike-engine/spike-web3-server/cache"
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
 	"github.com/spike-engine/spike-web3-server/config"
@@ -18,10 +24,6 @@ import (
 	"github.com/spike-engine/spike-web3-server/model"
 	"github.com/spike-engine/spike-web3-server/response"
 	"github.com/spike-engine/spike-web3-server/util"
-	"math/big"
-	"strings"
-	"sync"
-	"time"
 )
 
 type WorkerID uuid.UUID // worker session UUID
@@ -215,7 +217,7 @@ func (w *AllRoundWorker) BatchMint(reqs []model.BatchMintReq) ([]string, string,
 		return nil, "", err
 	}
 
-	unSignTransaction, err := util.NewSpikeTx(common.HexToAddress(w.info.walletAddress), config.Cfg.Contract.NftContractAddress[0], inputData, CNonce, w.BscClient).ConstructionTransaction()
+	unSignTransaction, err := util.NewSpikeTx(common.HexToAddress(w.info.walletAddress), reqs[0].NFTAddress, inputData, CNonce, w.BscClient).ConstructionTransaction()
 	if err != nil {
 		return nil, "", err
 	}
