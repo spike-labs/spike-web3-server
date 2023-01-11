@@ -71,7 +71,7 @@ sudo vim /etc/systemd/system/spike-web3-server.service
 Specify the path to the binary
 ```markdown
 [Service] 
-ExecStart=/usr/local/bin/spike-web3-server
+ExecStart=/usr/local/bin/spike-web3-server start
 Environment=SPIKE_WEB3_CONFIG=/etc/spike/config.toml
 Restart=always
 RestartSec=5 

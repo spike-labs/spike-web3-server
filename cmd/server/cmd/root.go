@@ -1,9 +1,8 @@
-package main
+package cmd
 
 import (
-	logger "github.com/ipfs/go-log"
+	"github.com/spf13/cobra"
 	"github.com/spike-engine/spike-web3-server/cache"
-	"github.com/spike-engine/spike-web3-server/chain"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/initialize"
@@ -11,15 +10,24 @@ import (
 	"github.com/spike-engine/spike-web3-server/service/sign"
 )
 
-// @title Swagger Example API
-// @version 0.0.1
-// @description
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name api_key
-// @BasePath /
-func main() {
-	logger.SetLogLevel("*", "INFO")
+var (
+	rootCmd *cobra.Command
+)
+
+func RootCommands() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "web3 server",
+		Short: "Spike Web3 server",
+	}
+	return cmd
+}
+
+// Execute executes the root command.
+func Execute() error {
+	return rootCmd.Execute()
+}
+
+func init() {
 	config.Viper = config.InitViper()
 	dao.GormClient = initialize.GormMysql()
 	dao.DbAccessor = dao.NewGormAccessor(dao.GormClient)
@@ -27,6 +35,9 @@ func main() {
 
 	query.QurManager = query.NewQueryManager()
 	sign.HwManager = sign.NewHWManager()
-	chain.NewBscListener()
-	initialize.RunServer()
+
+	rootCmd = RootCommands()
+	rootCmd.AddCommand(
+		StartCommand(),
+		ApiKeyCommands())
 }
