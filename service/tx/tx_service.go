@@ -13,13 +13,13 @@ type TxService struct {
 
 var TxSrv = new(TxService)
 
-func (t *TxService) RechargeToken(orderId string, fromAddress string, amount string, contractAddress string, txHash string, cb string) error {
+func (t *TxService) RechargeToken(orderId string, fromAddress string, amount string, contractAddress int, txHash string, cb string) error {
 	tx := model.SpikeTx{
 		OrderId:         orderId,
 		From:            fromAddress,
 		To:              config.Cfg.Contract.GameVaultAddress,
 		Amount:          amount,
-		ContractAddress: contractAddress,
+		ContractAddress: config.Cfg.Contract.ERC20ContractAddress[contractAddress],
 		TxHash:          txHash,
 		Cb:              cb,
 		CreateTime:      time.Now().UnixMilli(),
@@ -27,13 +27,13 @@ func (t *TxService) RechargeToken(orderId string, fromAddress string, amount str
 	return dao.DbAccessor.SaveTxCb(tx)
 }
 
-func (t *TxService) ImportNft(orderId string, from string, contractAddress string, tokenId int64, txHash string, cb string) error {
+func (t *TxService) ImportNft(orderId string, from string, contractAddress int, tokenId int64, txHash string, cb string) error {
 	tx := model.SpikeTx{
 		OrderId:         orderId,
 		From:            from,
 		To:              config.Cfg.Contract.GameVaultAddress,
 		TokenId:         tokenId,
-		ContractAddress: contractAddress,
+		ContractAddress: config.Cfg.Contract.NftContractAddress[contractAddress],
 		TxHash:          txHash,
 		Cb:              cb,
 		CreateTime:      time.Now().UnixMilli(),
