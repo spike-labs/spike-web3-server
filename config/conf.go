@@ -52,8 +52,9 @@ type Chain struct {
 }
 
 type System struct {
-	Port      string `toml:"Port"`
-	MachineId string `toml:"MachineId"`
+	Port          string `toml:"Port"`
+	MachineId     string `toml:"MachineId"`
+	SignSecretKey string `toml:"SignSecretKey"`
 }
 
 type Moralis struct {

@@ -179,7 +179,7 @@ func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
 			log.Error("bnb TransactionReceipt err : ", err)
 			return err
 		}
-		bl.Notify(game.NotifyEvent{TxHash: tx.Hash().Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
+		go bl.Notify(game.NotifyEvent{TxHash: tx.Hash().Hex(), Status: int(recp.Status), PayTime: int64(block.Time() * 1000)})
 		log.Infof("native tx ,from :%s, to : %s,  amount : %s", fromAddr, tx.To().Hex(), tx.Value().String())
 	}
 	return nil

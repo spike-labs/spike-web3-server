@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	logger "github.com/ipfs/go-log"
 	"github.com/spf13/cobra"
 	"github.com/spike-engine/spike-web3-server/cache"
 	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/model"
 )
+
+var log = logger.Logger("game")
 
 func ApiKeyCommands() *cobra.Command {
 	cmd := &cobra.Command{

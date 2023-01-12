@@ -21,7 +21,6 @@ func ClientIp(r *http.Request) string {
 
 	ip, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
 	if err == nil {
-		log.Infof("-----")
 		return ip
 	}
 	return ""
@@ -42,7 +41,6 @@ func ClientPublicIP(r *http.Request) string {
 	}
 
 	if ip, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr)); err == nil {
-		log.Infof("-----")
 		if !IsLocalIp(ip) {
 			return ip
 		}

@@ -9,8 +9,6 @@ import (
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
 	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/constant"
-	"github.com/spike-engine/spike-web3-server/dao"
-	"github.com/spike-engine/spike-web3-server/game"
 	"github.com/spike-engine/spike-web3-server/util"
 	"math/big"
 	"sync"
@@ -49,9 +47,6 @@ func NewBscListener() (*BscListener, error) {
 	errorHandle := make(chan ErrMsg, 10)
 	bl.errorHandle = errorHandle
 	bl.ec = client
-
-	cbManger := game.NewCbManager(dao.DbAccessor)
-	go cbManger.Run()
 
 	l := make(map[string]Listener)
 	l[constant.EmptyAddress] = newBNBListener(bl.ec, errorHandle)
