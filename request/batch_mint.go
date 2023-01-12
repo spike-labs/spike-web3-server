@@ -8,7 +8,7 @@ type BatchMintNFTService struct {
 	OrderId         string `form:"order_id" json:"order_id" binding:"required"`
 	TokenURI        string `form:"token_uri" json:"token_uri" binding:"required"`
 	Cb              string `form:"cb" json:"cb" binding:"required"`
-	ContractAddress string `form:"contract_address" json:"contract_address" binding:"required"`
+	ContractAddress int    `form:"contract_address" json:"contract_address" binding:"required"`
 }
 
 func (b *BatchMintNFTService) BatchMint(hwManager *sign.HotWalletManager) error {

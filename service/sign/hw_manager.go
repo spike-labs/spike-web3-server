@@ -67,7 +67,7 @@ func (w *HotWalletManager) AddWorker(worker Worker) {
 	w.scheduler.workers = append(w.scheduler.workers, worker)
 }
 
-func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string, contractAddress string) error {
+func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string, contractAddress int) error {
 	w.rLK.Lock()
 	defer w.rLK.Unlock()
 	TokenId, _, err := util.GetIntFromRedis(constant.TOKENID, w.rdb)
@@ -79,7 +79,7 @@ func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string,
 		Uuid:       uuid.New().String(),
 		TokenURI:   tokenURI,
 		TokenID:    TokenId,
-		NFTAddress: contractAddress,
+		NFTAddress: config.Cfg.Contract.NftContractAddress[contractAddress],
 	}
 
 	err = util.IncrFromRedis(constant.TOKENID, w.rdb)
@@ -93,7 +93,7 @@ func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string,
 		From:            constant.EmptyAddress,
 		To:              config.Cfg.Contract.GameVaultAddress,
 		Cb:              cb,
-		ContractAddress: contractAddress,
+		ContractAddress: config.Cfg.Contract.NftContractAddress[contractAddress],
 		CreateTime:      time.Now().UnixMilli(),
 		TokenId:         TokenId,
 	})
@@ -104,7 +104,7 @@ func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string,
 	return nil
 }
 
-func (w *HotWalletManager) WithdrawToken(orderId string, toAddress string, amount string, contractAddress string, cb string) error {
+func (w *HotWalletManager) WithdrawToken(orderId string, toAddress string, amount string, contractAddress int, cb string) error {
 
 	if !util.IsValidAddress(toAddress) || !util.IsValidAddress(contractAddress) {
 		return errors.New("=== Spike log : address is error")
@@ -114,7 +114,7 @@ func (w *HotWalletManager) WithdrawToken(orderId string, toAddress string, amoun
 		Uuid:         uuid.New().String(),
 		ToAddress:    common.HexToAddress(toAddress),
 		Amount:       amount,
-		TokenAddress: common.HexToAddress(contractAddress),
+		TokenAddress: common.HexToAddress(config.Cfg.Contract.ERC20ContractAddress[contractAddress]),
 	}
 
 	err := w.gorm.SaveTxCb(model.SpikeTx{
@@ -123,7 +123,7 @@ func (w *HotWalletManager) WithdrawToken(orderId string, toAddress string, amoun
 		From:            config.Cfg.Contract.GameVaultAddress,
 		To:              toAddress,
 		Cb:              cb,
-		ContractAddress: contractAddress,
+		ContractAddress: config.Cfg.Contract.ERC20ContractAddress[contractAddress],
 		CreateTime:      time.Now().UnixMilli(),
 		Amount:          amount,
 	})
@@ -134,7 +134,7 @@ func (w *HotWalletManager) WithdrawToken(orderId string, toAddress string, amoun
 	return nil
 }
 
-func (w *HotWalletManager) WithdrawNFT(orderId string, toAddress string, tokenId int64, contractAddress string, cb string) error {
+func (w *HotWalletManager) WithdrawNFT(orderId string, toAddress string, tokenId int64, contractAddress int, cb string) error {
 
 	if !util.IsValidAddress(toAddress) || !util.IsValidAddress(contractAddress) {
 		return errors.New("=== Spike log : address is error")
@@ -144,7 +144,7 @@ func (w *HotWalletManager) WithdrawNFT(orderId string, toAddress string, tokenId
 		Uuid:         uuid.New().String(),
 		TokenId:      tokenId,
 		ToAddress:    common.HexToAddress(toAddress),
-		TokenAddress: common.HexToAddress(contractAddress),
+		TokenAddress: common.HexToAddress(config.Cfg.Contract.NftContractAddress[contractAddress]),
 	}
 
 	err := w.gorm.SaveTxCb(model.SpikeTx{
@@ -153,7 +153,7 @@ func (w *HotWalletManager) WithdrawNFT(orderId string, toAddress string, tokenId
 		From:            config.Cfg.Contract.GameVaultAddress,
 		To:              toAddress,
 		Cb:              cb,
-		ContractAddress: contractAddress,
+		ContractAddress: config.Cfg.Contract.NftContractAddress[contractAddress],
 		CreateTime:      time.Now().UnixMilli(),
 		TokenId:         tokenId,
 	})
