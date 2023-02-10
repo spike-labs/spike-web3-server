@@ -4,10 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/ipfs/go-log"
 	v1 "github.com/spike-engine/spike-web3-server/api/v1"
-	_ "github.com/spike-engine/spike-web3-server/docs"
 	"github.com/spike-engine/spike-web3-server/middleware"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 var log = logger.Logger("initialize")
@@ -15,7 +12,6 @@ var log = logger.Logger("initialize")
 func initRouter() (*gin.Engine, error) {
 	var r = gin.Default()
 	r.Use(middleware.Cors())
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	publicGroup := r.Group("")
 	{

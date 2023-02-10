@@ -3,7 +3,6 @@ package queryApi
 import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/ipfs/go-log"
-	_ "github.com/spike-engine/spike-web3-server/docs"
 	"github.com/spike-engine/spike-web3-server/middleware"
 	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/response"
@@ -44,14 +43,6 @@ func (api *QueryGroup) InitQueryGroup(g *gin.RouterGroup) {
 	}
 }
 
-// @Summary  query all type nft list
-// @Produce  json
-// @Param    wallet_address   formData string true "wallet bsc address"
-// @Param    contract_address formData string true "nft contract address"
-// @Success  200              {object} response.Response
-// @Failure  500              {object} response.Response
-// @Router   /query-api/v1/nftList [post]
-// @Security ApiKeyAuth
 func (api *QueryGroup) NftList(c *gin.Context) {
 	var service request.NftTypeService
 	if err := c.ShouldBind(&service); err == nil {
@@ -67,15 +58,6 @@ func (api *QueryGroup) NftList(c *gin.Context) {
 	}
 }
 
-// @Summary  query single nft list
-// @Produce  json
-// @Param    wallet_address   formData string true "wallet bsc address"
-// @Param    contract_address formData string true "nft contract address"
-// @Param    type             formData string true "nft type"
-// @Success  200              {object} response.Response
-// @Failure  500              {object} response.Response
-// @Router   /query-api/v1/nft/list [post]
-// @Security ApiKeyAuth
 func (api *QueryGroup) QueryNftList(c *gin.Context) {
 	var service request.NftListService
 	if err := c.ShouldBind(&service); err == nil {
@@ -92,14 +74,6 @@ func (api *QueryGroup) QueryNftList(c *gin.Context) {
 	}
 }
 
-// @Summary  query all nft type
-// @Produce  json
-// @Param    wallet_address   formData string true "wallet bsc address"
-// @Param    contract_address formData string true "nft contract address"
-// @Success  200              {object} response.Response
-// @Failure  500              {object} response.Response
-// @Router   /query-api/v1/nft/type [post]
-// @Security ApiKeyAuth
 func (api *QueryGroup) QueryNftType(c *gin.Context) {
 	var service request.NftTypeService
 
@@ -118,13 +92,6 @@ func (api *QueryGroup) QueryNftType(c *gin.Context) {
 	}
 }
 
-// @Summary  query wallet balance
-// @Produce  json
-// @Param    wallet_address formData string true "wallet bsc address"
-// @Success  200            {object} response.Response
-// @Failure  500            {object} response.Response
-// @Router   /query-api/v1/balance [post]
-// @Security ApiKeyAuth
 func (api *QueryGroup) QueryBalance(c *gin.Context) {
 	var service request.BalanceService
 
@@ -145,13 +112,6 @@ func (api *QueryGroup) QueryBalance(c *gin.Context) {
 	}
 }
 
-// @Summary  query wallet native tx list(7 days)
-// @Produce  json
-// @Param    wallet_address formData string true "wallet bsc address"
-// @Success  200            {object} response.Response
-// @Failure  500            {object} response.Response
-// @Router   /query-api/v1/txRecord/native [post]
-// @Security ApiKeyAuth
 func (api *QueryGroup) QueryNativeTxRecord(c *gin.Context) {
 	var service request.NativeTxRecordService
 
@@ -173,14 +133,6 @@ func (api *QueryGroup) QueryNativeTxRecord(c *gin.Context) {
 	}
 }
 
-// @Summary  query wallet ERC20 tx list(7 days)
-// @Produce  json
-// @Param    wallet_address   formData string true "wallet bsc address"
-// @Param    contract_address formData string true "erc20 contract address"
-// @Success  200              {object} response.Response
-// @Failure  500              {object} response.Response
-// @Router   /query-api/v1/txRecord/erc20 [post]
-// @Security ApiKeyAuth
 func (api *QueryGroup) QueryERC20TxRecord(c *gin.Context) {
 	var service request.ERC20TxRecordService
 
