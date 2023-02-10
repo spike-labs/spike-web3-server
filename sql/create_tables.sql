@@ -19,7 +19,8 @@ CREATE TABLE `order` (
     `amount` varchar(255) DEFAULT NULL,
     `token_id` bigint DEFAULT NULL,
     `cb` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-    PRIMARY KEY (`order_id`)
+    PRIMARY KEY (`order_id`),
+    KEY `index_tx_hash` (`tx_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -39,7 +40,10 @@ CREATE TABLE `nft_owner` (
     `contract_address` varchar(255) NOT NULL,
     `token_id` bigint NOT NULL,
     `update_time` bigint NOT NULL,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    KEY `index_owner_address` (`owner_address`(191)),
+    KEY `index_contract_address` (`contract_address`),
+    KEY `index_token_id` (`token_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -58,4 +62,3 @@ CREATE TABLE `api_key` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
-

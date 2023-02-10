@@ -25,7 +25,7 @@ func IsERC721Token(contractAddr string) bool {
 	return false
 }
 
-func QueryNftTokenUri(gameNftAddress string, tokenId string) (string, error) {
+func QueryNftTokenUri(gameNftAddress string, tokenId int64) (string, error) {
 	client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
 	if err != nil {
 		return "", err
@@ -35,12 +35,7 @@ func QueryNftTokenUri(gameNftAddress string, tokenId string) (string, error) {
 		log.Error("new auNft err : ", err)
 		return "", err
 	}
-	id, err := strconv.Atoi(tokenId)
-	if err != nil {
-		log.Errorf("string %s convert int err : %v", tokenId, err)
-		return "", err
-	}
-	uri, err := gameNft.TokenURI(nil, big.NewInt(int64(id)))
+	uri, err := gameNft.TokenURI(nil, big.NewInt(tokenId))
 	if err != nil {
 		log.Errorf("query tokenUri tokenId : %d, err : %+v", tokenId, err)
 		return "", err

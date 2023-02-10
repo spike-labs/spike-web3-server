@@ -35,7 +35,7 @@ func (g *GormAccessor) RecordTxHash(uuidList []string, txHash string, txStatus i
 
 func (g *GormAccessor) QueryGameCb(txHash string, notifyStatus int) ([]model.SpikeTx, error) {
 	var spikeTxs []model.SpikeTx
-	if err := g.DB.Select("cb", "order_id", "tx_hash").Where("tx_hash = ? and notify_status = ?", txHash, notifyStatus).Find(&spikeTxs).Error; err != nil {
+	if err := g.DB.Select("cb", "order_id", "tx_hash", "contract_address", "token_id").Where("tx_hash = ? and notify_status = ?", txHash, notifyStatus).Find(&spikeTxs).Error; err != nil {
 		log.Errorf("query game cb err : %v", err)
 		return spikeTxs, err
 	}
@@ -56,7 +56,7 @@ func (g *GormAccessor) UpdateTxNotifyStatus(orderId string, notifyStatus int) er
 
 func (g *GormAccessor) QueryNotNotifyTx(notNotifyStatus int) ([]model.SpikeTx, error) {
 	var spikeTxs []model.SpikeTx
-	if err := g.DB.Select("cb", "order_id", "status", "tx_hash", "create_time").Where("notify_status = ?", notNotifyStatus).Find(&spikeTxs).Error; err != nil {
+	if err := g.DB.Select("cb", "order_id", "status", "tx_hash", "create_time", "contract_address").Where("notify_status = ?", notNotifyStatus).Find(&spikeTxs).Error; err != nil {
 		return spikeTxs, err
 	}
 	return spikeTxs, nil

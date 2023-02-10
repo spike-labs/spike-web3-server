@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-resty/resty/v2"
@@ -13,6 +12,7 @@ import (
 	"github.com/spike-engine/spike-web3-server/model"
 	"github.com/spike-engine/spike-web3-server/util"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -61,13 +61,14 @@ func (cm *CbManager) Update(event interface{}) {
 
 	e, ok := event.(NotifyEvent)
 	if !ok {
+		log.Errorf(" ok txhash : %s", e.TxHash)
 		return
 	}
 	util.Lock(e.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, cache.RedisClient)
 
 	defer util.UnLock(e.TxHash, cache.RedisClient)
-
-	txs, err := cm.QueryGameCb(e.TxHash, constant.NOTNOTIFIED)
+	log.Infof("txhash : %s", e.TxHash)
+	txs, err := cm.QueryGameCb(strings.ToLower(e.TxHash), constant.NOTNOTIFIED)
 	if err != nil {
 		log.Errorf("query game cb err : %v", err)
 		return
@@ -160,29 +161,33 @@ func (cm *CbManager) handleNotNotifiedTx(tx model.SpikeTx) {
 func executeCb(tx model.SpikeTx, txStatus int) error {
 	isERC721Token := util.IsERC721Token(tx.ContractAddress)
 	var signContent string
-	var cbReq []byte
+	log.Infof("execute cb : %s, txHash : %s", tx.Cb, tx.TxHash)
 	if isERC721Token {
-		tokenUri, err := util.QueryNftTokenUri(tx.ContractAddress, string(tx.TokenId))
+		log.Infof("ok execute cb : %s, txHash : %s", tx.Cb, tx.TxHash)
+		tokenUri, err := util.QueryNftTokenUri(tx.ContractAddress, tx.TokenId)
 		if err != nil {
+			log.Errorf("query uri err : %v", err)
 			return err
 		}
 		signContent = tx.TxHash + tx.OrderId + strconv.FormatInt(int64(txStatus), 10) + strconv.FormatInt(tx.TokenId, 10) + tokenUri
 		sign := util.HmacSha256(signContent, config.Cfg.System.SignSecretKey)
-		cbReq, _ = json.Marshal(CallBackService{
-			TxHash:   tx.TxHash,
-			OrderId:  tx.OrderId,
-			TokenId:  int(tx.TokenId),
-			Status:   txStatus,
-			TokenUri: tokenUri,
-			Sign:     sign,
-		})
 		client := resty.New()
 		resp, err := client.R().
 			SetHeader("Accept", "application/json").
-			SetBody(cbReq).
+			SetBody(CallBackService{
+				TxHash:   tx.TxHash,
+				OrderId:  tx.OrderId,
+				TokenId:  int(tx.TokenId),
+				Status:   txStatus,
+				TokenUri: tokenUri,
+				Sign:     sign,
+			}).
 			Post(tx.Cb)
 		log.Infof("execute cb : %s, txHash : %s", tx.Cb, tx.TxHash)
 		log.Infof("resp : %s", string(resp.Body()))
+		if err != nil {
+			log.Errorf("cb err :%v", err)
+		}
 		return err
 	}
 	return nil

@@ -91,7 +91,16 @@ func (el *ERC20Listener) NewEventFilter(contractAddr string) error {
 
 func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) error {
 	log.Infof("erc20 past event filter, type : %v, fromBlock : %d, toBlock : %d ", el.contractAddr, fromBlockNum, toBlockNum)
-	ethClient := el.ec
+	rpcClient, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
+	if err != nil {
+		el.errorHandler <- ErrMsg{
+			contractAddr: el.contractAddr,
+			from:         fromBlockNum,
+			to:           toBlockNum,
+		}
+		return err
+	}
+
 	contractAddress := common.HexToAddress(el.contractAddr)
 
 	query := ethereum.FilterQuery{
@@ -100,7 +109,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 		ToBlock:   toBlockNum,
 	}
 
-	sub, err := ethClient.FilterLogs(context.Background(), query)
+	sub, err := rpcClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		el.errorHandler <- ErrMsg{
 			contractAddr: el.contractAddr,
@@ -110,6 +119,7 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 		log.Errorf("erc20 subscribe err : %+v, from : %d, to : %d, type : %s", err, fromBlockNum.Int64(), toBlockNum.Int64(), el.contractAddr)
 		return err
 	}
+
 	for _, logEvent := range sub {
 		switch logEvent.Topics[0].String() {
 		case util.EventSignHash(chain.TRANSFERTOPIC):
@@ -130,13 +140,13 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 			if accept := el.Accept(fromAddr, toAddr); !accept {
 				break
 			}
-			recp, err := el.ec.TransactionReceipt(context.Background(), logEvent.TxHash)
+			recp, err := rpcClient.TransactionReceipt(context.Background(), logEvent.TxHash)
 			if err != nil {
 				el.errorHandler <- msg
 				log.Errorf("query txReceipt txHash : %s, err : %+v", logEvent.TxHash, err)
 				break
 			}
-			block, err := el.ec.BlockByNumber(context.Background(), big.NewInt(int64(logEvent.BlockNumber)))
+			block, err := rpcClient.BlockByNumber(context.Background(), big.NewInt(int64(logEvent.BlockNumber)))
 			if err != nil {
 				el.errorHandler <- msg
 				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", logEvent.BlockNumber, err)
@@ -164,13 +174,13 @@ func (el *ERC20Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) erro
 			if accept := el.Accept(fromAddr, toAddr); !accept {
 				break
 			}
-			recp, err := el.ec.TransactionReceipt(context.Background(), logEvent.TxHash)
+			recp, err := rpcClient.TransactionReceipt(context.Background(), logEvent.TxHash)
 			if err != nil {
 				el.errorHandler <- msg
 				log.Errorf("query txReceipt txHash : %s, err : %+v", logEvent.TxHash, err)
 				break
 			}
-			block, err := el.ec.BlockByNumber(context.Background(), big.NewInt(int64(logEvent.BlockNumber)))
+			block, err := rpcClient.BlockByNumber(context.Background(), big.NewInt(int64(logEvent.BlockNumber)))
 			if err != nil {
 				el.errorHandler <- msg
 				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", logEvent.BlockNumber, err)

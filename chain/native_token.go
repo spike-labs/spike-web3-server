@@ -82,14 +82,8 @@ func (bl *BNBListener) NewBlockFilter() error {
 		log.Error("bnb subscribe new head err : ", err)
 		return err
 	}
-	resubscribeTicker := time.NewTicker(5 * time.Minute)
 	for {
 		select {
-		case <-resubscribeTicker.C:
-			sub = event.Resubscribe(time.Millisecond, func(ctx context.Context) (event.Subscription, error) {
-				return bl.ec.SubscribeNewHead(context.Background(), newBlockChan)
-			})
-			log.Info("ticker reSubscribe ws")
 		case err = <-sub.Err():
 			sub = event.Resubscribe(time.Millisecond, func(ctx context.Context) (event.Subscription, error) {
 				return bl.ec.SubscribeNewHead(context.Background(), newBlockChan)
@@ -99,7 +93,7 @@ func (bl *BNBListener) NewBlockFilter() error {
 			height := new(big.Int).Sub(header.Number, big.NewInt(constant.BlockConfirmHeight))
 			cacheHeight, _, err := util.GetIntFromRedis(BLOCKNUM+config.Cfg.System.MachineId, cache.RedisClient)
 
-			if height.Int64()-1 > cacheHeight {
+			if height.Int64()-1 > cacheHeight && cacheHeight != 0 {
 				for i := cacheHeight + 1; i < height.Int64(); i++ {
 					log.Errorf("ws node timeout err : height %d", i)
 					bl.errorHandler <- ErrMsg{
@@ -154,7 +148,11 @@ func (bl *BNBListener) handlePastBlock(blockNum, nowBlockNum *big.Int) error {
 }
 
 func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
-	block, err := bl.ec.BlockByNumber(context.Background(), height)
+	rpcClient, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
+	if err != nil {
+		return err
+	}
+	block, err := rpcClient.BlockByNumber(context.Background(), height)
 	if err != nil {
 		log.Errorf("bnb blockByHash heght : %d ,err : %+v", height.Int64(), err)
 		return err
@@ -174,7 +172,7 @@ func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
 		if accept := bl.Accept(fromAddr, tx.To().Hex()); !accept {
 			continue
 		}
-		recp, err := bl.ec.TransactionReceipt(context.Background(), tx.Hash())
+		recp, err := rpcClient.TransactionReceipt(context.Background(), tx.Hash())
 		if err != nil {
 			log.Error("bnb TransactionReceipt err : ", err)
 			return err

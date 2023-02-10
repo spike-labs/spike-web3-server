@@ -1,0 +1,391 @@
+definitions:
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  title: Swagger Example API
+  version: 0.0.1
+paths:
+  /query-api/v1/balance:
+    post:
+      parameters:
+        - description: wallet bsc address
+          in: formData
+          name: wallet_address
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - ApiKeyAuth: []
+      summary: query wallet balance
+  /query-api/v1/nft/list:
+    post:
+      parameters:
+        - description: wallet bsc address
+          in: formData
+          name: wallet_address
+          required: true
+          type: string
+        - description: nft contract address
+          in: formData
+          name: contract_address
+          required: true
+          type: string
+        - description: nft type
+          in: formData
+          name: type
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: query single nft list
+  /query-api/v1/nft/type:
+    post:
+      parameters:
+        - description: wallet bsc address
+          in: formData
+          name: wallet_address
+          required: true
+          type: string
+        - description: nft contract address
+          in: formData
+          name: contract_address
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: query all nft type
+  /query-api/v1/nftList:
+    post:
+      parameters:
+        - description: wallet bsc address
+          in: formData
+          name: wallet_address
+          required: true
+          type: string
+        - description: nft contract address
+          in: formData
+          name: contract_address
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - ApiKeyAuth: []
+      summary: query all type nft list
+  /query-api/v1/txRecord/erc20:
+    post:
+      parameters:
+        - description: wallet bsc address
+          in: formData
+          name: wallet_address
+          required: true
+          type: string
+        - description: erc20 contract address
+          in: formData
+          name: contract_address
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: query wallet ERC20 tx list(7 days)
+  /query-api/v1/txRecord/native:
+    post:
+      parameters:
+        - description: wallet bsc address
+          in: formData
+          name: wallet_address
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: query wallet native tx list(7 days)
+  /tx-api/v1/client/importNft:
+    post:
+      parameters:
+        - description: game orderId
+          in: formData
+          name: order_id
+          required: true
+          type: string
+        - description: tx fromAddress
+          in: formData
+          name: from_address
+          required: true
+          type: string
+        - description: nft contract address
+          in: formData
+          name: contract_address
+          required: true
+          type: string
+        - description: nft token id
+          in: formData
+          name: token_id
+          required: true
+          type: integer
+        - description: tx hash
+          in: formData
+          name: tx_hash
+          required: true
+          type: string
+        - description: game callBack url address
+          in: formData
+          name: cb
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: import nft
+  /tx-api/v1/client/rechargeToken:
+    post:
+      parameters:
+        - description: game orderId
+          in: formData
+          name: order_id
+          required: true
+          type: string
+        - description: tx fromAddress
+          in: formData
+          name: from_address
+          required: true
+          type: string
+        - description: tx token amount
+          in: formData
+          name: amount
+          required: true
+          type: string
+        - description: 'token contract address(native : 0x0000000000000000000000000000000000000000)'
+          in: formData
+          name: contract_address
+          required: true
+          type: string
+        - description: tx hash
+          in: formData
+          name: tx_hash
+          required: true
+          type: string
+        - description: game callBack url address
+          in: formData
+          name: cb
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: recharge token
+  /tx-api/v1/hotWallet/mint:
+    post:
+      parameters:
+        - description: game orderId
+          in: body
+          name: order_id
+          required: true
+          type: string
+        - description: nft tokenUri
+          in: body
+          name: token_uri
+          required: true
+          type: string
+        - description: game callBack url address
+          in: body
+          name: cb
+          required: true
+          type: string
+        - description: contract address
+          in: body
+          name: contract address
+          type: integer
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: mint nft
+  /tx-api/v1/hotWallet/withdrawNFT:
+    post:
+      parameters:
+        - description: game orderId
+          in: formData
+          name: order_id
+          required: true
+          type: string
+        - description: tx toAddress
+          in: formData
+          name: to_address
+          required: true
+          type: string
+        - description: nft token id
+          in: formData
+          name: token_id
+          required: true
+          type: integer
+        - description: nft contract address
+          in: formData
+          name: contract_address
+          required: true
+          type: string
+        - description: game callBack url address
+          in: formData
+          name: cb
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: withdraw nft
+  /tx-api/v1/hotWallet/withdrawToken:
+    post:
+      parameters:
+        - description: game orderId
+          in: formData
+          name: order_id
+          required: true
+          type: string
+        - description: tx toAddress
+          in: formData
+          name: to_address
+          required: true
+          type: string
+        - description: tx token amount
+          in: formData
+          name: amount
+          required: true
+          type: string
+        - description: 'token contract address(native : 0x0000000000000000000000000000000000000000)'
+          in: formData
+          name: contract_address
+          required: true
+          type: string
+        - description: game callBack url address
+          in: formData
+          name: cb
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+        - api_key: []
+      summary: withdraw token
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: api_key
+    type: apiKey
+swagger: "2.0"

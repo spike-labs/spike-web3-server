@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spike-engine/spike-web3-server/cache"
 	chain "github.com/spike-engine/spike-web3-server/chain/abi"
+	"github.com/spike-engine/spike-web3-server/config"
 	"github.com/spike-engine/spike-web3-server/dao"
 	"github.com/spike-engine/spike-web3-server/game"
 	"github.com/spike-engine/spike-web3-server/util"
@@ -79,7 +80,15 @@ func (el *ERC721Listener) NewEventFilter() error {
 
 func (el *ERC721Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) error {
 	log.Infof("nft past event filter, fromBlock : %d, toBlock : %d ", fromBlockNum, toBlockNum)
-	ethClient := el.ec
+	rpcClient, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
+	if err != nil {
+		el.errorHandler <- ErrMsg{
+			contractAddr: el.contractAddr,
+			from:         fromBlockNum,
+			to:           toBlockNum,
+		}
+		return err
+	}
 	contractAddress := common.HexToAddress(el.contractAddr)
 
 	query := ethereum.FilterQuery{
@@ -88,7 +97,7 @@ func (el *ERC721Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) err
 		ToBlock:   toBlockNum,
 	}
 
-	sub, err := ethClient.FilterLogs(context.Background(), query)
+	sub, err := rpcClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		el.errorHandler <- ErrMsg{
 			contractAddr: el.contractAddr,
@@ -106,13 +115,13 @@ func (el *ERC721Listener) handlePastBlock(fromBlockNum, toBlockNum *big.Int) err
 				from:         big.NewInt(int64(logEvent.BlockNumber)),
 				to:           big.NewInt(int64(logEvent.BlockNumber)),
 			}
-			recp, err := el.ec.TransactionReceipt(context.Background(), logEvent.TxHash)
+			recp, err := rpcClient.TransactionReceipt(context.Background(), logEvent.TxHash)
 			if err != nil {
 				el.errorHandler <- msg
 				log.Error("nft TransactionReceipt err : ", err)
 				break
 			}
-			block, err := el.ec.BlockByNumber(context.Background(), big.NewInt(int64(logEvent.BlockNumber)))
+			block, err := rpcClient.BlockByNumber(context.Background(), big.NewInt(int64(logEvent.BlockNumber)))
 			if err != nil {
 				el.errorHandler <- msg
 				log.Errorf("query BlockByNumber blockNum : %d, err : %+v", logEvent.BlockNumber, err)

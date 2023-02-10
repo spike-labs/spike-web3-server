@@ -2,6 +2,7 @@ package sign
 
 import (
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
@@ -93,7 +94,7 @@ func (w *HotWalletManager) BatchMint(orderId string, tokenURI string, cb string,
 		From:            constant.EmptyAddress,
 		To:              config.Cfg.Contract.GameVaultAddress,
 		Cb:              cb,
-		ContractAddress: config.Cfg.Contract.NftContractAddress[contractAddress],
+		ContractAddress: strings.ToLower(config.Cfg.Contract.NftContractAddress[contractAddress]),
 		CreateTime:      time.Now().UnixMilli(),
 		TokenId:         TokenId,
 	})
