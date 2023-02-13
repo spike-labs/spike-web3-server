@@ -2,6 +2,8 @@ package game
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-resty/resty/v2"
@@ -19,9 +21,11 @@ import (
 
 var log = logger.Logger("game")
 
+var cbErr = errors.New("cb err")
+
 const (
-	HANDLEDURATION          = 10 * time.Minute
-	TXTIMEOUTDURATION       = 20 * time.Minute
+	HANDLEDURATION          = 5 * time.Minute
+	TXTIMEOUTDURATION       = 10 * time.Minute
 	LOCKTIMEOUTDURATION     = 5 * time.Minute
 	CALLBACKTIMEOUTDURATION = 2 * time.Hour
 )
@@ -53,6 +57,7 @@ type NotifyEvent struct {
 func NewCbManager(tracker TxTracker) *CbManager {
 	cbMgrOnce.Do(func() {
 		CbMgr = &CbManager{tracker}
+		go CbMgr.Run()
 	})
 	return CbMgr
 }
@@ -120,33 +125,46 @@ func (cm *CbManager) Run() {
 }
 
 func (cm *CbManager) handleNotNotifiedTx(tx model.SpikeTx) {
+	var txStatus int
+	var cbTxStatus = 1
 	if time.Now().After(time.UnixMilli(tx.CreateTime).Add(TXTIMEOUTDURATION)) && time.Now().Before(time.UnixMilli(tx.CreateTime).Add(CALLBACKTIMEOUTDURATION)) {
-		util.Lock(tx.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, cache.RedisClient)
-
-		defer util.UnLock(tx.TxHash, cache.RedisClient)
-
-		log.Infof("tx cb timeout handle, orderId: %s, txHash : %s, createTime : %d", tx.OrderId, tx.TxHash, tx.CreateTime)
-		client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
-		if err != nil {
-			log.Errorf("eth client dial err : %v", err)
-			return
-		}
-		receipt, err := client.TransactionReceipt(context.Background(), common.HexToHash(tx.TxHash))
-		if err != nil {
-			log.Errorf("query tx receipt status err : %v", err)
-			return
-		}
-		var txStatus int
-		txStatus = constant.TXSUCCESS
-		if receipt.Status == 0 {
+		if tx.TxHash == "" {
+			log.Infof("tx hash is null")
 			txStatus = constant.TXFAILED
+			cbTxStatus = 0
+		} else {
+			util.Lock(tx.TxHash, constant.TXCBVALUE, LOCKTIMEOUTDURATION, cache.RedisClient)
+
+			defer util.UnLock(tx.TxHash, cache.RedisClient)
+
+			log.Infof("tx cb timeout handle, orderId: %s, txHash : %s, createTime : %d", tx.OrderId, tx.TxHash, tx.CreateTime)
+			client, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
+			if err != nil {
+				log.Errorf("eth client dial err : %v", err)
+				return
+			}
+
+			receipt, err := client.TransactionReceipt(context.Background(), common.HexToHash(tx.TxHash))
+			if err != nil {
+				cbTxStatus = 0
+				log.Errorf("query tx receipt status err : %v", err)
+				txStatus = constant.TXFAILED
+			} else {
+				txStatus = constant.TXSUCCESS
+				if receipt.Status == 0 {
+					cbTxStatus = 0
+					txStatus = constant.TXFAILED
+				}
+			}
 		}
-		err = cm.UpdateTxStatus(tx.TxHash, txStatus, tx.PayTime)
+
+		err := cm.UpdateTxStatus(tx.TxHash, txStatus, tx.PayTime)
 		if err != nil {
 			log.Errorf("update tx status err : %v", err)
 			return
 		}
-		err = executeCb(tx, int(receipt.Status))
+
+		err = executeCb(tx, cbTxStatus)
 		if err != nil {
 			log.Errorf("execute cb order id : %s ,err : %v", tx.OrderId, err)
 			return
@@ -167,7 +185,7 @@ func executeCb(tx model.SpikeTx, txStatus int) error {
 		tokenUri, err := util.QueryNftTokenUri(tx.ContractAddress, tx.TokenId)
 		if err != nil {
 			log.Errorf("query uri err : %v", err)
-			return err
+			tokenUri = ""
 		}
 		signContent = tx.TxHash + tx.OrderId + strconv.FormatInt(int64(txStatus), 10) + strconv.FormatInt(tx.TokenId, 10) + tokenUri
 		sign := util.HmacSha256(signContent, config.Cfg.System.SignSecretKey)
@@ -187,8 +205,21 @@ func executeCb(tx model.SpikeTx, txStatus int) error {
 		log.Infof("resp : %s", string(resp.Body()))
 		if err != nil {
 			log.Errorf("cb err :%v", err)
+			return err
 		}
-		return err
+		var gameResp struct {
+			Code int
+			Msg  string
+			Data string
+		}
+		err = json.Unmarshal(resp.Body(), &gameResp)
+		if err != nil {
+			log.Errorf("cb resp unmarshal err :%v", err)
+			return err
+		}
+		if gameResp.Data == "FAIL" {
+			return cbErr
+		}
 	}
 	return nil
 }

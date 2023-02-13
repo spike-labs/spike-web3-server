@@ -148,13 +148,10 @@ func (bl *BNBListener) handlePastBlock(blockNum, nowBlockNum *big.Int) error {
 }
 
 func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
-	rpcClient, err := ethclient.Dial(config.Cfg.Chain.RpcNodeAddress)
+
+	block, err := bl.ec.BlockByNumber(context.Background(), height)
 	if err != nil {
-		return err
-	}
-	block, err := rpcClient.BlockByNumber(context.Background(), height)
-	if err != nil {
-		log.Errorf("bnb blockByHash heght : %d ,err : %+v", height.Int64(), err)
+		log.Errorf("bnb blockByHash height : %d ,err : %+v", height.Int64(), err)
 		return err
 	}
 	log.Infof("bnb height : %d , tx num :  %d", block.Number(), len(block.Transactions()))
@@ -172,7 +169,7 @@ func (bl *BNBListener) SingleBlockFilter(height *big.Int) error {
 		if accept := bl.Accept(fromAddr, tx.To().Hex()); !accept {
 			continue
 		}
-		recp, err := rpcClient.TransactionReceipt(context.Background(), tx.Hash())
+		recp, err := bl.ec.TransactionReceipt(context.Background(), tx.Hash())
 		if err != nil {
 			log.Error("bnb TransactionReceipt err : ", err)
 			return err

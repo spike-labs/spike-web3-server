@@ -176,6 +176,7 @@ func (w *AllRoundWorker) SignatureTransaction(unSignTX *types.Transaction) (*typ
 		return nil, err
 	}
 
+	log.Infof("res.data : %+v,", res.Data)
 	err = json.Unmarshal([]byte(res.Data.(string)), &signedTransaction)
 	if err != nil {
 		return nil, err
