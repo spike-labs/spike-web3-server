@@ -7,6 +7,7 @@ import (
 	"github.com/spike-engine/spike-web3-server/request"
 	"github.com/spike-engine/spike-web3-server/response"
 	"github.com/spike-engine/spike-web3-server/service/query"
+	"github.com/spike-engine/spike-web3-server/util"
 )
 
 var log = logger.Logger("queryApi")
@@ -40,6 +41,43 @@ func (api *QueryGroup) InitQueryGroup(g *gin.RouterGroup) {
 	{
 		txRecord.POST("/native", api.QueryNativeTxRecord)
 		txRecord.POST("/erc20", api.QueryERC20TxRecord)
+	}
+
+	crypto := g.Group("crypto")
+	{
+		crypto.POST("generateEcdsaKeyPair", api.GenerateKeyPair)
+		crypto.POST("ecdsaSign", api.EcdsaSign)
+	}
+}
+
+func (api *QueryGroup) GenerateKeyPair(c *gin.Context) {
+	privateKey, publicKey, err := util.GenerateEcdsaKey()
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(struct {
+		PrivateKey string `json:"private_key"`
+		PublicKey  string `json:"public_key"`
+	}{privateKey, publicKey}, c)
+}
+
+func (api *QueryGroup) EcdsaSign(c *gin.Context) {
+	var service request.SignRequest
+	if err := c.ShouldBindJSON(&service); err == nil {
+		log.Infof("%s sign msg: %s", service.PrivateKey, service.SignMsg)
+		signature, err := util.EcdsaSign(service.PrivateKey, service.SignMsg)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		response.OkWithData(struct {
+			Signature string `json:"signature"`
+		}{
+			signature,
+		}, c)
+	} else {
+		response.FailWithMessage("request params error", c)
 	}
 }
 
